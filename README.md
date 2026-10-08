@@ -22,6 +22,10 @@ npm run check -- "120 W 28th St" 17:00     # same answer, in the terminal
 
 Out of the box the app runs on **demo data** (`data/demo.json`): sample signs written in NYC DOT's format but **placed on made-up curbs**. The page shows a "Demo mode" banner. Never use the demo data for real deliveries.
 
+## Deploy on Vercel
+
+Connect the GitHub repo in Vercel; no settings needed. `vercel.json` serves `public/` as the page, and `api/check.js` / `api/info.js` run as serverless functions (the same logic as `src/server.js`). The data file (`data/pilot.json`, or the demo data) ships with the functions, so rebuild and commit it to update the live app.
+
 ## Load the real city data
 
 ```bash
