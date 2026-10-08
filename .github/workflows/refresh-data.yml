@@ -1,0 +1,67 @@
+# Downloads NYC parking-sign data for the pilot area, rebuilds data/pilot.json,
+# and commits it. Vercel redeploys on the commit.
+#
+# Runs: when this file or the data scripts change on the CurbPilot branch,
+# by hand (Actions tab -> Refresh NYC sign data -> Run workflow), and weekly.
+
+name: Refresh NYC sign data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * 1' # Mondays 09:17 UTC
+  push:
+    branches: [claude/curbpilot-mvp-plan-3gv9y7]
+    paths:
+      - .github/workflows/refresh-data.yml
+      - scripts/fetch-data.js
+      - scripts/build-data.js
+      - src/rules.js
+      - src/config.js
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download signs from NYC Open Data
+        run: npm run fetch-data
+
+      - name: Build block faces
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            npm install --no-audit --no-fund
+            npm run build-data -- --ai
+          else
+            npm run build-data
+          fi
+
+      - name: Run tests
+        run: npm test
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/pilot.json data/ai-rules-cache.json 2>/dev/null || git add data/pilot.json
+          if git diff --cached --quiet; then
+            echo "No data changes."
+          else
+            git commit -m "Refresh NYC sign data for the pilot area"
+            git push
+          fi
