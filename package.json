@@ -1,0 +1,21 @@
+{
+  "name": "curbpilot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Curb rule checker: tells NYC delivery drivers where their van can legally stop, in plain English.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test",
+    "demo-data": "node scripts/make-demo-data.js",
+    "fetch-data": "node scripts/fetch-data.js",
+    "build-data": "node scripts/build-data.js",
+    "check": "node scripts/check.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "optionalDependencies": {
+    "@anthropic-ai/sdk": "^0.132.1"
+  }
+}

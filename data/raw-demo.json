@@ -1,0 +1,680 @@
+{
+ "source": "demo",
+ "rows": [
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "3 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 7AM-7PM EXCEPT SUNDAY <---->",
+   "lat": 40.746157625,
+   "lon": -73.9909575
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "NO PARKING (SANITATION BROOM SYMBOL) 8:30AM-10AM TUES & FRI <->",
+   "lat": 40.746157625,
+   "lon": -73.9909575
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "3 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 7AM-7PM EXCEPT SUNDAY <---->",
+   "lat": 40.746584625000004,
+   "lon": -73.9919725
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "NO PARKING (SANITATION BROOM SYMBOL) 8:30AM-10AM TUES & FRI <->",
+   "lat": 40.746584625000004,
+   "lon": -73.9919725
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "3 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 7AM-7PM EXCEPT SUNDAY <---->",
+   "lat": 40.747011625000006,
+   "lon": -73.9929875
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "NO PARKING (SANITATION BROOM SYMBOL) 8:30AM-10AM TUES & FRI <->",
+   "lat": 40.747011625000006,
+   "lon": -73.9929875
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO STANDING 4PM-7PM EXCEPT SUNDAY <---->",
+   "lat": 40.746000375,
+   "lon": -73.99107249999999
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "3 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 7AM-4PM EXCEPT SUNDAY",
+   "lat": 40.746000375,
+   "lon": -73.99107249999999
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO STANDING 4PM-7PM EXCEPT SUNDAY <---->",
+   "lat": 40.746427375,
+   "lon": -73.9920875
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "3 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 7AM-4PM EXCEPT SUNDAY",
+   "lat": 40.746427375,
+   "lon": -73.9920875
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO STANDING 4PM-7PM EXCEPT SUNDAY <---->",
+   "lat": 40.746854375000005,
+   "lon": -73.99310249999999
+  },
+  {
+   "on_street": "W 28 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "3 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 7AM-4PM EXCEPT SUNDAY",
+   "lat": 40.746854375000005,
+   "lon": -73.99310249999999
+  },
+  {
+   "on_street": "W 27 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-7PM MON THRU FRI <->",
+   "lat": 40.745528625,
+   "lon": -73.9914175
+  },
+  {
+   "on_street": "W 27 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-7PM MON THRU FRI <->",
+   "lat": 40.745955625,
+   "lon": -73.9924325
+  },
+  {
+   "on_street": "W 27 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-7PM MON THRU FRI <->",
+   "lat": 40.746382625,
+   "lon": -73.9934475
+  },
+  {
+   "on_street": "W 27 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO STANDING ANYTIME <->",
+   "lat": 40.745371375,
+   "lon": -73.99153249999999
+  },
+  {
+   "on_street": "W 27 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO STANDING ANYTIME <->",
+   "lat": 40.745798375,
+   "lon": -73.9925475
+  },
+  {
+   "on_street": "W 27 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO STANDING ANYTIME <->",
+   "lat": 40.746225375,
+   "lon": -73.9935625
+  },
+  {
+   "on_street": "W 29 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "2 HMP PASSENGER VEHICLES ONLY 9AM-7PM EXCEPT SUNDAY",
+   "lat": 40.746786625,
+   "lon": -73.9904975
+  },
+  {
+   "on_street": "W 29 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "2 HMP PASSENGER VEHICLES ONLY 9AM-7PM EXCEPT SUNDAY",
+   "lat": 40.747213625,
+   "lon": -73.9915125
+  },
+  {
+   "on_street": "W 29 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "2 HMP PASSENGER VEHICLES ONLY 9AM-7PM EXCEPT SUNDAY",
+   "lat": 40.747640625,
+   "lon": -73.99252750000001
+  },
+  {
+   "on_street": "W 29 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO PARKING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.746629375,
+   "lon": -73.9906125
+  },
+  {
+   "on_street": "W 29 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO PARKING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.747056375,
+   "lon": -73.99162749999999
+  },
+  {
+   "on_street": "W 29 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO PARKING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.747483375,
+   "lon": -73.9926425
+  },
+  {
+   "on_street": "W 26 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.744899625,
+   "lon": -73.9918775
+  },
+  {
+   "on_street": "W 26 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.745326625000004,
+   "lon": -73.99289250000001
+  },
+  {
+   "on_street": "W 26 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "N",
+   "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.745753625000006,
+   "lon": -73.9939075
+  },
+  {
+   "on_street": "W 26 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO STOPPING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.744742375,
+   "lon": -73.9919925
+  },
+  {
+   "on_street": "W 26 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO STOPPING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.745169375,
+   "lon": -73.9930075
+  },
+  {
+   "on_street": "W 26 ST",
+   "from_street": "6 AVE",
+   "to_street": "7 AVE",
+   "side": "S",
+   "text": "NO STOPPING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.745596375000005,
+   "lon": -73.9940225
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "W",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74477592142857,
+   "lon": -73.99153457142857
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "W",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74499607142857,
+   "lon": -73.99137357142857
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "W",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74521622142857,
+   "lon": -73.99121257142856
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "E",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74468877857143,
+   "lon": -73.99132742857144
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "E",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74490892857143,
+   "lon": -73.99116642857143
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "E",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74512907857143,
+   "lon": -73.99100542857143
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "W",
+   "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.745404921428566,
+   "lon": -73.99107457142857
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "W",
+   "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.74562507142857,
+   "lon": -73.99091357142856
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "W",
+   "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.745845221428574,
+   "lon": -73.99075257142856
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "E",
+   "text": "BUS STOP",
+   "lat": 40.745317778571426,
+   "lon": -73.99086742857143
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "E",
+   "text": "BUS STOP",
+   "lat": 40.74553792857143,
+   "lon": -73.99070642857143
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "E",
+   "text": "BUS STOP",
+   "lat": 40.745758078571434,
+   "lon": -73.99054542857142
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "W",
+   "text": "NO STOPPING 7AM-10AM 4PM-7PM EXCEPT SUNDAY",
+   "lat": 40.74603392142857,
+   "lon": -73.99061457142857
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "W",
+   "text": "1 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 10AM-4PM EXCEPT SUNDAY",
+   "lat": 40.74603392142857,
+   "lon": -73.99061457142857
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "W",
+   "text": "NO STOPPING 7AM-10AM 4PM-7PM EXCEPT SUNDAY",
+   "lat": 40.746254071428574,
+   "lon": -73.99045357142857
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "W",
+   "text": "1 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 10AM-4PM EXCEPT SUNDAY",
+   "lat": 40.746254071428574,
+   "lon": -73.99045357142857
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "W",
+   "text": "NO STOPPING 7AM-10AM 4PM-7PM EXCEPT SUNDAY",
+   "lat": 40.74647422142857,
+   "lon": -73.99029257142857
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "W",
+   "text": "1 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 10AM-4PM EXCEPT SUNDAY",
+   "lat": 40.74647422142857,
+   "lon": -73.99029257142857
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "E",
+   "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.74594677857143,
+   "lon": -73.99040742857143
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "E",
+   "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.746166928571434,
+   "lon": -73.99024642857144
+  },
+  {
+   "on_street": "6 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "E",
+   "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.74638707857143,
+   "lon": -73.99008542857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "E",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74590877857143,
+   "lon": -73.99422742857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "E",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74612892857143,
+   "lon": -73.99406642857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "E",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.746349078571434,
+   "lon": -73.99390542857142
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "W",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74599592142857,
+   "lon": -73.99443457142857
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "W",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74621607142857,
+   "lon": -73.99427357142856
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 26 ST",
+   "to_street": "W 27 ST",
+   "side": "W",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.746436221428574,
+   "lon": -73.99411257142856
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "E",
+   "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-10AM MON-FRI",
+   "lat": 40.74653777857143,
+   "lon": -73.99376742857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "E",
+   "text": "NO STANDING 10AM-7PM MON-FRI",
+   "lat": 40.74653777857143,
+   "lon": -73.99376742857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "E",
+   "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-10AM MON-FRI",
+   "lat": 40.746757928571434,
+   "lon": -73.99360642857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "E",
+   "text": "NO STANDING 10AM-7PM MON-FRI",
+   "lat": 40.746757928571434,
+   "lon": -73.99360642857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "E",
+   "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-10AM MON-FRI",
+   "lat": 40.74697807857144,
+   "lon": -73.99344542857142
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "E",
+   "text": "NO STANDING 10AM-7PM MON-FRI",
+   "lat": 40.74697807857144,
+   "lon": -73.99344542857142
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "W",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74662492142857,
+   "lon": -73.99397457142857
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "W",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.746845071428574,
+   "lon": -73.99381357142856
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 27 ST",
+   "to_street": "W 28 ST",
+   "side": "W",
+   "text": "NO STANDING ANYTIME",
+   "lat": 40.74706522142858,
+   "lon": -73.99365257142856
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "E",
+   "text": "SPECIAL EVENT REGULATION SEE SUPPLEMENTARY PLATE",
+   "lat": 40.74716677857143,
+   "lon": -73.99330742857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "E",
+   "text": "NO PARKING 8AM-6PM MON-FRI",
+   "lat": 40.74716677857143,
+   "lon": -73.99330742857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "E",
+   "text": "SPECIAL EVENT REGULATION SEE SUPPLEMENTARY PLATE",
+   "lat": 40.74738692857144,
+   "lon": -73.99314642857142
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "E",
+   "text": "NO PARKING 8AM-6PM MON-FRI",
+   "lat": 40.74738692857144,
+   "lon": -73.99314642857142
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "E",
+   "text": "SPECIAL EVENT REGULATION SEE SUPPLEMENTARY PLATE",
+   "lat": 40.747607078571434,
+   "lon": -73.99298542857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "E",
+   "text": "NO PARKING 8AM-6PM MON-FRI",
+   "lat": 40.747607078571434,
+   "lon": -73.99298542857143
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "W",
+   "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.74725392142857,
+   "lon": -73.99351457142856
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "W",
+   "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.74747407142858,
+   "lon": -73.99335357142856
+  },
+  {
+   "on_street": "7 AVE",
+   "from_street": "W 28 ST",
+   "to_street": "W 29 ST",
+   "side": "W",
+   "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+   "lat": 40.747694221428574,
+   "lon": -73.99319257142857
+  }
+ ]
+}

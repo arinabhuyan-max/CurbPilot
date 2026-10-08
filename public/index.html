@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>CurbPilot</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #ffffff; --text: #0f172a; --muted: #5b6474; --line: #dde1e7;
+    --accent: #1d4ed8; --accent-text: #ffffff;
+    --go: #15803d; --go-bg: #e8f6ed; --load: #1d4ed8; --load-bg: #e8effd;
+    --warn: #b45309; --warn-bg: #fdf3e3; --stop: #b91c1c; --stop-bg: #fdecec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b1120; --card: #141c2f; --text: #e8ecf3; --muted: #9aa4b5; --line: #26314a;
+      --accent: #3b82f6; --accent-text: #ffffff;
+      --go: #4ade80; --go-bg: #10291b; --load: #7aa7ff; --load-bg: #142142;
+      --warn: #fbbf24; --warn-bg: #2d2210; --stop: #f87171; --stop-bg: #2f1414;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 560px; margin: 0 auto; padding: 16px 16px 40px; }
+  header { display: flex; align-items: baseline; gap: 10px; margin: 4px 0 14px; }
+  h1 { font-size: 24px; margin: 0; letter-spacing: -0.02em; }
+  header span { color: var(--muted); font-size: 14px; }
+  .banner { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 10px 12px; font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+  form { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin: 0 0 6px; }
+  input {
+    width: 100%; font: inherit; font-size: 18px; color: var(--text); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px; min-height: 50px;
+  }
+  .row { display: flex; gap: 10px; align-items: end; margin-top: 12px; }
+  .row > div { flex: 1; }
+  .now { font: inherit; font-size: 15px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 10px; min-height: 50px; padding: 0 14px; }
+  button[type=submit] {
+    width: 100%; margin-top: 14px; min-height: 56px; border: 0; border-radius: 12px;
+    background: var(--accent); color: var(--accent-text); font: inherit; font-size: 19px; font-weight: 700;
+  }
+  button:disabled { opacity: .6; }
+  .recent { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .recent button { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 999px; padding: 6px 12px; }
+  .result { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .verdict { padding: 14px; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: .04em; }
+  .v-go { background: var(--go-bg); color: var(--go); }
+  .v-load { background: var(--load-bg); color: var(--load); }
+  .v-nearby { background: var(--warn-bg); color: var(--warn); }
+  .v-none, .v-error { background: var(--stop-bg); color: var(--stop); }
+  .v-outside { background: var(--bg); color: var(--muted); }
+  .body { padding: 14px; }
+  .meta { color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+  .summary { font-size: 20px; line-height: 1.4; font-weight: 600; margin: 0; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 18px 0 6px; }
+  ul { margin: 0; padding: 0; list-style: none; }
+  li { padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; font-size: 16px; }
+  li b { display: block; font-size: 14px; }
+  .alt li { background: var(--bg); }
+  .caveats { color: var(--muted); font-size: 13px; }
+  .caveats li { padding: 2px 0; margin: 0; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 18px; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <header><h1>CurbPilot</h1><span>Where can my van stop?</span></header>
+  <div id="demo" class="banner" hidden>Demo mode: sample signs, not real NYC data. Don't use for real deliveries.</div>
+
+  <form id="form" autocomplete="on">
+    <label for="address">Delivery address</label>
+    <input id="address" name="address" placeholder="e.g. 120 W 28th St" required enterkeyhint="go" autocapitalize="words">
+    <div class="row">
+      <div>
+        <label for="time">Arriving</label>
+        <input id="time" name="time" type="time" aria-describedby="timehint">
+      </div>
+      <button type="button" class="now" id="now">Now</button>
+    </div>
+    <div id="timehint" class="meta" style="margin:6px 0 0">Leave blank for right now.</div>
+    <button type="submit" id="go">Check the curb</button>
+    <div class="recent" id="recent"></div>
+  </form>
+
+  <section id="out" aria-live="polite"></section>
+  <footer id="area"></footer>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const VERDICT = {
+    go: 'Legal parking here', load: 'OK to stop for a delivery', nearby: 'Not on this block, try nearby',
+    none: 'No legal spot nearby', outside: 'Outside coverage area', error: 'Problem',
+  };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function recent() { try { return JSON.parse(localStorage.getItem('curbpilot.recent') || '[]'); } catch { return []; } }
+  function remember(addr) {
+    try { localStorage.setItem('curbpilot.recent', JSON.stringify([addr, ...recent().filter((a) => a !== addr)].slice(0, 5))); } catch {}
+    drawRecent();
+  }
+  function drawRecent() {
+    $('recent').innerHTML = recent().map((a) => `<button type="button" data-a="${esc(a)}">${esc(a)}</button>`).join('');
+  }
+  $('recent').addEventListener('click', (e) => {
+    const a = e.target.dataset && e.target.dataset.a;
+    if (a) { $('address').value = a; $('form').requestSubmit(); }
+  });
+  $('now').addEventListener('click', () => { $('time').value = ''; $('address').focus(); });
+
+  function list(title, cls, items) {
+    if (!items || !items.length) return '';
+    return `<h2>${title}</h2><ul class="${cls}">${items.map((x) =>
+      `<li><b>${esc(x.label)}${x.distance ? ` · ${esc(x.distance)}` : ''}</b>${esc(x.text)}</li>`).join('')}</ul>`;
+  }
+
+  function render(r) {
+    const v = r.error ? 'error' : r.verdict;
+    let html = `<div class="result"><div class="verdict v-${v}">${VERDICT[v] || v}</div><div class="body">`;
+    if (r.error) {
+      html += `<p class="summary">${esc(r.error)}</p>`;
+    } else {
+      html += `<div class="meta">${esc(r.address || '')}${r.when ? ` · ${esc(r.when)}` : ''}</div>`;
+      html += `<p class="summary">${esc(r.summary)}</p>`;
+      html += list('Also legal', 'alt', r.alternatives);
+      if (r.caveats) html += `<h2>Good to know</h2><ul class="caveats">${r.caveats.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`;
+    }
+    $('out').innerHTML = html + '</div></div>';
+  }
+
+  $('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const address = $('address').value.trim();
+    if (!address) return;
+    $('go').disabled = true; $('go').textContent = 'Checking…';
+    try {
+      const q = new URLSearchParams({ address, when: $('time').value || 'now' });
+      const res = await fetch(`/api/check?${q}`);
+      const r = await res.json();
+      render(r);
+      if (!r.error) remember(address);
+      $('out').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch {
+      render({ error: 'No connection. Read the signs before you stop.' });
+    } finally {
+      $('go').disabled = false; $('go').textContent = 'Check the curb';
+    }
+  });
+
+  fetch('/api/info').then((r) => r.json()).then((i) => {
+    $('demo').hidden = !i.demo;
+    $('area').textContent = `Covers ${i.area}. Fewer tickets, not guaranteed open spots.`;
+  }).catch(() => {});
+  drawRecent();
+</script>
+</body>
+</html>

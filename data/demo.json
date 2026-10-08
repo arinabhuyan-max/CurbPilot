@@ -1,0 +1,819 @@
+{
+ "meta": {
+  "demo": true,
+  "area": "Midtown South / Flower District: W 23rd to W 34th St, 5th Ave to 9th Ave",
+  "source": "Illustrative sample signs (NOT real NYC data)",
+  "fetchedAt": null,
+  "builtAt": "2026-10-08T22:08:25.308Z",
+  "signs": 75,
+  "unreadSigns": 1
+ },
+ "blockfaces": [
+  {
+   "id": "W 28 ST|6 AVE|7 AVE|N",
+   "street": "W 28 ST",
+   "from": "6 AVE",
+   "to": "7 AVE",
+   "side": "N",
+   "line": [
+    [
+     40.746158,
+     -73.990957
+    ],
+    [
+     40.747012,
+     -73.992987
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "commercial_parking",
+     "windows": [
+      {
+       "start": 420,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": 180,
+     "paid": true,
+     "text": "3 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 7AM-7PM EXCEPT SUNDAY <---->",
+     "source": "parser"
+    },
+    {
+     "kind": "no_parking",
+     "windows": [
+      {
+       "start": 510,
+       "end": 600
+      }
+     ],
+     "days": [
+      2,
+      5
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO PARKING (SANITATION BROOM SYMBOL) 8:30AM-10AM TUES & FRI <->",
+     "source": "parser",
+     "cleaning": true
+    }
+   ]
+  },
+  {
+   "id": "W 28 ST|6 AVE|7 AVE|S",
+   "street": "W 28 ST",
+   "from": "6 AVE",
+   "to": "7 AVE",
+   "side": "S",
+   "line": [
+    [
+     40.746,
+     -73.991072
+    ],
+    [
+     40.746854,
+     -73.993102
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": [
+      {
+       "start": 960,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING 4PM-7PM EXCEPT SUNDAY <---->",
+     "source": "parser"
+    },
+    {
+     "kind": "commercial_parking",
+     "windows": [
+      {
+       "start": 420,
+       "end": 960
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": 180,
+     "paid": true,
+     "text": "3 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 7AM-4PM EXCEPT SUNDAY",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "W 27 ST|6 AVE|7 AVE|N",
+   "street": "W 27 ST",
+   "from": "6 AVE",
+   "to": "7 AVE",
+   "side": "N",
+   "line": [
+    [
+     40.745529,
+     -73.991417
+    ],
+    [
+     40.746383,
+     -73.993448
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "truck_loading",
+     "windows": [
+      {
+       "start": 420,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-7PM MON THRU FRI <->",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "W 27 ST|6 AVE|7 AVE|S",
+   "street": "W 27 ST",
+   "from": "6 AVE",
+   "to": "7 AVE",
+   "side": "S",
+   "line": [
+    [
+     40.745371,
+     -73.991532
+    ],
+    [
+     40.746225,
+     -73.993562
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": null,
+     "days": null,
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING ANYTIME <->",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "W 29 ST|6 AVE|7 AVE|N",
+   "street": "W 29 ST",
+   "from": "6 AVE",
+   "to": "7 AVE",
+   "side": "N",
+   "line": [
+    [
+     40.746787,
+     -73.990498
+    ],
+    [
+     40.747641,
+     -73.992528
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "passenger_only",
+     "windows": [
+      {
+       "start": 540,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": 120,
+     "paid": true,
+     "text": "2 HMP PASSENGER VEHICLES ONLY 9AM-7PM EXCEPT SUNDAY",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "W 29 ST|6 AVE|7 AVE|S",
+   "street": "W 29 ST",
+   "from": "6 AVE",
+   "to": "7 AVE",
+   "side": "S",
+   "line": [
+    [
+     40.746629,
+     -73.990612
+    ],
+    [
+     40.747483,
+     -73.992643
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_parking",
+     "windows": [
+      {
+       "start": 420,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO PARKING 7AM-7PM EXCEPT SUNDAY",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "W 26 ST|6 AVE|7 AVE|N",
+   "street": "W 26 ST",
+   "from": "6 AVE",
+   "to": "7 AVE",
+   "side": "N",
+   "line": [
+    [
+     40.7449,
+     -73.991878
+    ],
+    [
+     40.745754,
+     -73.993908
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": [
+      {
+       "start": 420,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "W 26 ST|6 AVE|7 AVE|S",
+   "street": "W 26 ST",
+   "from": "6 AVE",
+   "to": "7 AVE",
+   "side": "S",
+   "line": [
+    [
+     40.744742,
+     -73.991992
+    ],
+    [
+     40.745596,
+     -73.994022
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_stopping",
+     "windows": [
+      {
+       "start": 420,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STOPPING 7AM-7PM EXCEPT SUNDAY",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "6 AVE|W 26 ST|W 27 ST|W",
+   "street": "6 AVE",
+   "from": "W 26 ST",
+   "to": "W 27 ST",
+   "side": "W",
+   "line": [
+    [
+     40.744776,
+     -73.991535
+    ],
+    [
+     40.745216,
+     -73.991213
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": null,
+     "days": null,
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING ANYTIME",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "6 AVE|W 26 ST|W 27 ST|E",
+   "street": "6 AVE",
+   "from": "W 26 ST",
+   "to": "W 27 ST",
+   "side": "E",
+   "line": [
+    [
+     40.744689,
+     -73.991327
+    ],
+    [
+     40.745129,
+     -73.991005
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": null,
+     "days": null,
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING ANYTIME",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "6 AVE|W 27 ST|W 28 ST|W",
+   "street": "6 AVE",
+   "from": "W 27 ST",
+   "to": "W 28 ST",
+   "side": "W",
+   "line": [
+    [
+     40.745405,
+     -73.991075
+    ],
+    [
+     40.745845,
+     -73.990753
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": [
+      {
+       "start": 420,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "6 AVE|W 27 ST|W 28 ST|E",
+   "street": "6 AVE",
+   "from": "W 27 ST",
+   "to": "W 28 ST",
+   "side": "E",
+   "line": [
+    [
+     40.745318,
+     -73.990867
+    ],
+    [
+     40.745758,
+     -73.990545
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": null,
+     "days": null,
+     "limitMinutes": null,
+     "paid": false,
+     "text": "BUS STOP",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "6 AVE|W 28 ST|W 29 ST|W",
+   "street": "6 AVE",
+   "from": "W 28 ST",
+   "to": "W 29 ST",
+   "side": "W",
+   "line": [
+    [
+     40.746034,
+     -73.990615
+    ],
+    [
+     40.746474,
+     -73.990293
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_stopping",
+     "windows": [
+      {
+       "start": 420,
+       "end": 600
+      },
+      {
+       "start": 960,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STOPPING 7AM-10AM 4PM-7PM EXCEPT SUNDAY",
+     "source": "parser"
+    },
+    {
+     "kind": "commercial_parking",
+     "windows": [
+      {
+       "start": 600,
+       "end": 960
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": 60,
+     "paid": true,
+     "text": "1 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 10AM-4PM EXCEPT SUNDAY",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "6 AVE|W 28 ST|W 29 ST|E",
+   "street": "6 AVE",
+   "from": "W 28 ST",
+   "to": "W 29 ST",
+   "side": "E",
+   "line": [
+    [
+     40.745947,
+     -73.990407
+    ],
+    [
+     40.746387,
+     -73.990085
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "truck_loading",
+     "windows": [
+      {
+       "start": 420,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-7PM EXCEPT SUNDAY",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "7 AVE|W 26 ST|W 27 ST|E",
+   "street": "7 AVE",
+   "from": "W 26 ST",
+   "to": "W 27 ST",
+   "side": "E",
+   "line": [
+    [
+     40.745909,
+     -73.994227
+    ],
+    [
+     40.746349,
+     -73.993905
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": null,
+     "days": null,
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING ANYTIME",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "7 AVE|W 26 ST|W 27 ST|W",
+   "street": "7 AVE",
+   "from": "W 26 ST",
+   "to": "W 27 ST",
+   "side": "W",
+   "line": [
+    [
+     40.745996,
+     -73.994435
+    ],
+    [
+     40.746436,
+     -73.994113
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": null,
+     "days": null,
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING ANYTIME",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "7 AVE|W 27 ST|W 28 ST|E",
+   "street": "7 AVE",
+   "from": "W 27 ST",
+   "to": "W 28 ST",
+   "side": "E",
+   "line": [
+    [
+     40.746538,
+     -73.993767
+    ],
+    [
+     40.746978,
+     -73.993445
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "truck_loading",
+     "windows": [
+      {
+       "start": 420,
+       "end": 600
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 7AM-10AM MON-FRI",
+     "source": "parser"
+    },
+    {
+     "kind": "no_standing",
+     "windows": [
+      {
+       "start": 600,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING 10AM-7PM MON-FRI",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "7 AVE|W 27 ST|W 28 ST|W",
+   "street": "7 AVE",
+   "from": "W 27 ST",
+   "to": "W 28 ST",
+   "side": "W",
+   "line": [
+    [
+     40.746625,
+     -73.993975
+    ],
+    [
+     40.747065,
+     -73.993653
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": null,
+     "days": null,
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING ANYTIME",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "7 AVE|W 28 ST|W 29 ST|E",
+   "street": "7 AVE",
+   "from": "W 28 ST",
+   "to": "W 29 ST",
+   "side": "E",
+   "line": [
+    [
+     40.747167,
+     -73.993307
+    ],
+    [
+     40.747607,
+     -73.992985
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "unknown",
+     "windows": null,
+     "days": null,
+     "limitMinutes": null,
+     "paid": false,
+     "text": "SPECIAL EVENT REGULATION SEE SUPPLEMENTARY PLATE",
+     "source": "parser"
+    },
+    {
+     "kind": "no_parking",
+     "windows": [
+      {
+       "start": 480,
+       "end": 1080
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO PARKING 8AM-6PM MON-FRI",
+     "source": "parser"
+    }
+   ]
+  },
+  {
+   "id": "7 AVE|W 28 ST|W 29 ST|W",
+   "street": "7 AVE",
+   "from": "W 28 ST",
+   "to": "W 29 ST",
+   "side": "W",
+   "line": [
+    [
+     40.747254,
+     -73.993515
+    ],
+    [
+     40.747694,
+     -73.993193
+    ]
+   ],
+   "rules": [
+    {
+     "kind": "no_standing",
+     "windows": [
+      {
+       "start": 420,
+       "end": 1140
+      }
+     ],
+     "days": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "limitMinutes": null,
+     "paid": false,
+     "text": "NO STANDING 7AM-7PM EXCEPT SUNDAY",
+     "source": "parser"
+    }
+   ]
+  }
+ ]
+}
