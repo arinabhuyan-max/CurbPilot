@@ -1,14 +1,21 @@
 #!/usr/bin/env node
 // Turns raw sign rows into block faces with structured rules.
 //
-//   npm run build-data                       raw-signs.json -> pilot.json
+//   npm run build-data                       raw-signs.ndjson -> curbs.json
 //   npm run build-data -- --ai               also let Claude read unparsed signs
 //   node scripts/build-data.js IN OUT [--demo] [--ai]
 //
-// Prints every sign it could not read so a person can check them.
+// IN is NDJSON (one sign per line, from fetch-data) or JSON ({ rows: [...] }).
+// OUT is compact so all of NYC fits in one file: each distinct sign text is
+// parsed once into a shared rules table, and faces point at rules by index:
+//   { meta, rules: [rule], faces: [[street, from, to, side, [lat, lon, ...], [ruleIndex]]] }
+// src/data.js expands it back into block faces.
+//
+// Prints the sign texts it could not read so a person can check them.
 
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 const { parseSign } = require('../src/rules');
 const { normalizeStreet } = require('../src/streets');
 const { distanceMeters } = require('../src/geo');
@@ -29,31 +36,36 @@ function farthestPair(points) {
   return best;
 }
 
-function groupFaces(rows) {
+async function* readRows(file) {
+  if (!file.endsWith('.ndjson')) {
+    yield* JSON.parse(fs.readFileSync(file, 'utf8')).rows;
+    return;
+  }
+  const lines = readline.createInterface({ input: fs.createReadStream(file), crlfDelay: Infinity });
+  for await (const line of lines) if (line.trim()) yield JSON.parse(line);
+}
+
+async function groupFaces(file) {
   const faces = new Map();
-  for (const r of rows) {
-    const key = [normalizeStreet(r.on_street), normalizeStreet(r.from_street), normalizeStreet(r.to_street), r.side].join('|');
-    if (!faces.has(key)) {
-      faces.set(key, {
-        id: key,
-        street: normalizeStreet(r.on_street),
-        from: normalizeStreet(r.from_street),
-        to: normalizeStreet(r.to_street),
-        side: r.side,
-        points: [],
-        texts: new Set(),
-      });
-    }
-    const f = faces.get(key);
-    f.points.push([Number(r.lat.toFixed(6)), Number(r.lon.toFixed(6))]);
+  let signs = 0;
+  for await (const r of readRows(file)) {
+    signs++;
+    const street = normalizeStreet(r.on_street);
+    const from = normalizeStreet(r.from_street);
+    const to = normalizeStreet(r.to_street);
+    const key = `${street}|${from}|${to}|${r.side}`;
+    let f = faces.get(key);
+    if (!f) faces.set(key, (f = { street, from, to, side: r.side, points: [], texts: new Set() }));
+    // Signs on one pole share a point; keep each location once.
+    const p = [Number(Number(r.lat).toFixed(5)), Number(Number(r.lon).toFixed(5))];
+    if (!f.points.some((q) => q[0] === p[0] && q[1] === p[1])) f.points.push(p);
     f.texts.add(String(r.text).trim());
   }
-  return [...faces.values()];
+  return { faces: [...faces.values()], signs };
 }
 
 async function build(inFile, outFile, { demo = false, ai = false } = {}) {
-  const raw = JSON.parse(fs.readFileSync(inFile, 'utf8'));
-  const faces = groupFaces(raw.rows);
+  const { faces, signs } = await groupFaces(inFile);
 
   const parsed = new Map();
   for (const f of faces) for (const t of f.texts) if (!parsed.has(t)) parsed.set(t, parseSign(t));
@@ -67,37 +79,49 @@ async function build(inFile, outFile, { demo = false, ai = false } = {}) {
     unknown = unknown.filter((t) => !read.has(t));
   }
 
-  const blockfaces = faces.map((f) => ({
-    id: f.id,
-    street: f.street,
-    from: f.from,
-    to: f.to,
-    side: f.side,
-    line: farthestPair(f.points),
-    rules: [...f.texts].map((t) => parsed.get(t)),
-  }));
+  // Shared rules table; info plates are dropped since they never affect an answer.
+  const rules = [];
+  const ruleIndex = new Map();
+  for (const [text, rule] of parsed) {
+    if (rule.kind === 'info') continue;
+    ruleIndex.set(text, rules.length);
+    rules.push(rule);
+  }
+  const compactFaces = faces
+    .map((f) => [
+      f.street,
+      f.from,
+      f.to,
+      f.side,
+      farthestPair(f.points).flat(),
+      [...f.texts].filter((t) => ruleIndex.has(t)).map((t) => ruleIndex.get(t)),
+    ])
+    .filter((f) => f[0] && f[4].length);
 
   const out = {
     meta: {
       demo,
       area: area.name,
-      source: demo ? 'Illustrative sample signs (NOT real NYC data)' : raw.source,
-      fetchedAt: raw.fetchedAt || null,
+      source: demo ? 'Illustrative sample signs (NOT real NYC data)' : 'NYC Open Data: Parking Regulation Locations and Signs',
       builtAt: new Date().toISOString(),
-      signs: raw.rows.length,
+      signs,
+      faces: compactFaces.length,
       unreadSigns: unknown.length,
     },
-    blockfaces,
+    rules,
+    faces: compactFaces,
   };
-  fs.writeFileSync(outFile, JSON.stringify(out, null, 1));
+  fs.writeFileSync(outFile, JSON.stringify(out));
 
   const kinds = {};
   for (const r of parsed.values()) kinds[r.kind] = (kinds[r.kind] || 0) + 1;
-  console.log(`Built ${blockfaces.length} block faces from ${raw.rows.length} signs -> ${path.relative(process.cwd(), outFile)}`);
+  const mb = (fs.statSync(outFile).size / 1e6).toFixed(1);
+  console.log(`Built ${compactFaces.length} block faces from ${signs} signs -> ${path.relative(process.cwd(), outFile)} (${mb} MB)`);
   console.log('Distinct sign texts by kind:', kinds);
   if (unknown.length) {
     console.log(`\n${unknown.length} sign text(s) could not be read. Drivers will be told to check these:`);
-    for (const t of unknown.slice(0, 50)) console.log(`  - ${t}`);
+    for (const t of unknown.slice(0, 100)) console.log(`  - ${t}`);
+    if (unknown.length > 100) console.log(`  … and ${unknown.length - 100} more`);
     if (!ai) console.log('Tip: `npm run build-data -- --ai` lets Claude read them (needs ANTHROPIC_API_KEY).');
   }
 }
@@ -105,7 +129,7 @@ async function build(inFile, outFile, { demo = false, ai = false } = {}) {
 if (require.main === module) {
   const args = process.argv.slice(2);
   const flags = new Set(args.filter((a) => a.startsWith('--')));
-  const [inFile = path.join(DATA, 'raw-signs.json'), outFile = path.join(DATA, 'pilot.json')] = args.filter(
+  const [inFile = path.join(DATA, 'raw-signs.ndjson'), outFile = path.join(DATA, 'curbs.json')] = args.filter(
     (a) => !a.startsWith('--')
   );
   build(inFile, outFile, { demo: flags.has('--demo'), ai: flags.has('--ai') }).catch((err) => {
@@ -114,4 +138,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { build, groupFaces };
+module.exports = { build };

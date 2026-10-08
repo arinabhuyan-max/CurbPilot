@@ -65,7 +65,8 @@ function describeStatus(face, status, when) {
       return `${what} ${until}${limit ? `, ${limit}` : ''}${paid ? ' — pay at the meter' : ''}.`;
     }
     case 'free':
-      return `No posted parking restriction ${until}.`;
+      // Citywide rules for commercial vehicles still apply where no sign is posted.
+      return `No posted parking restriction ${until}. City rules for commercial vans still apply: 3-hour limit, and no parking 9 PM–5 AM on residential streets.`;
     case 'load': {
       const trucks = status.load.every((r) => r.kind === 'truck_loading');
       if (trucks) {
@@ -148,7 +149,7 @@ function buildAnswer({ place, faces, when, meta = {} }) {
     return {
       ok: false,
       verdict: 'outside',
-      summary: `CurbPilot doesn't cover this address yet. Right now it only covers ${meta.area || 'the pilot area'}.`,
+      summary: `CurbPilot has no curb sign data within ${COVERAGE_METERS} m of this address. It covers ${meta.area || 'the pilot area'}, wherever the city has sign records.`,
       caveats,
     };
   }

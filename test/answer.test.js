@@ -106,3 +106,11 @@ test('state plane coordinates round-trip (Empire State Building)', () => {
   const [lat, lon] = statePlaneToLatLon(x, y);
   assert.ok(Math.abs(lat - 40.748817) < 1e-7 && Math.abs(lon + 73.985428) < 1e-7);
 });
+
+test('compact data loads and the grid finds nearby faces only', () => {
+  const { facesNear } = require('../src/data');
+  assert.equal(demo.blockfaces.length, 20);
+  const near = facesNear(demo, 40.7466, -73.9915);
+  assert.ok(near.length > 0 && near.length <= 20);
+  assert.equal(facesNear(demo, 40.6, -73.9).length, 0, 'Brooklyn has no demo faces');
+});

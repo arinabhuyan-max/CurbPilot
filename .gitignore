@@ -1,3 +1,4 @@
 node_modules/
+data/raw-signs.ndjson
 data/raw-signs.json
 .env

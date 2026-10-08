@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Downloads NYC DOT "Parking Regulation Locations and Signs" (NYC Open Data,
-// dataset nfid-uabd) for Manhattan and keeps the signs inside the pilot area.
-// Output: data/raw-signs.json (one row per sign, normalized field names).
+// dataset nfid-uabd) for all five boroughs.
+// Output: data/raw-signs.ndjson (one sign per line, normalized field names),
+// written as it downloads so the city-wide set never sits in memory at once.
 //
 //   npm run fetch-data
 //   SOCRATA_APP_TOKEN=... npm run fetch-data   (optional, raises rate limits)
@@ -13,7 +14,7 @@ const { statePlaneToLatLon } = require('../src/geo');
 
 const DATASET = process.env.CURBPILOT_DATASET || 'https://data.cityofnewyork.us/resource/nfid-uabd.json';
 const PAGE = 50000;
-const OUT = path.join(__dirname, '..', 'data', 'raw-signs.json');
+const OUT = path.join(__dirname, '..', 'data', 'raw-signs.ndjson');
 
 const pick = (row, names) => {
   for (const n of names) if (row[n] != null && row[n] !== '') return row[n];
@@ -52,30 +53,49 @@ function inArea({ lat, lon }) {
   return lat >= b.south && lat <= b.north && lon >= b.west && lon <= b.east;
 }
 
+// The city's server occasionally drops a page; try each page a few times.
+async function fetchWithRetry(url, headers) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const res = await fetch(url, { headers, signal: AbortSignal.timeout(120000) });
+      if (res.ok || attempt === 4 || (res.status < 500 && res.status !== 429)) return res;
+    } catch (err) {
+      if (attempt === 4) throw err;
+    }
+    await new Promise((ok) => setTimeout(ok, 2000 * 2 ** attempt));
+  }
+}
+
 async function main() {
   const headers = process.env.SOCRATA_APP_TOKEN ? { 'X-App-Token': process.env.SOCRATA_APP_TOKEN } : {};
-  const where = process.env.CURBPILOT_WHERE || "upper(borough)='MANHATTAN'";
-  const kept = [];
+  // Optional filter, e.g. CURBPILOT_WHERE="upper(borough)='MANHATTAN'"
+  const where = process.env.CURBPILOT_WHERE;
+  const out = fs.createWriteStream(OUT);
+  let kept = 0;
   let seen = 0;
   for (let offset = 0; ; offset += PAGE) {
-    const url = `${DATASET}?$where=${encodeURIComponent(where)}&$limit=${PAGE}&$offset=${offset}&$order=:id`;
+    const filter = where ? `$where=${encodeURIComponent(where)}&` : '';
+    const url = `${DATASET}?${filter}$limit=${PAGE}&$offset=${offset}&$order=:id`;
     process.stdout.write(`Fetching rows ${offset}…`);
-    const res = await fetch(url, { headers });
+    const res = await fetchWithRetry(url, headers);
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
     const rows = await res.json();
     if (offset === 0 && rows[0]) console.log(`\n  columns: ${Object.keys(rows[0]).join(', ')}`);
     seen += rows.length;
     for (const r of rows.map(normalizeRow)) {
-      if (r.text && r.on_street && r.lat && r.lon && !r.voided && inArea(r)) kept.push(r);
+      if (r.text && r.on_street && r.lat && r.lon && !r.voided && inArea(r)) {
+        if (!out.write(JSON.stringify(r) + '\n')) await new Promise((ok) => out.once('drain', ok));
+        kept++;
+      }
     }
-    console.log(` ${rows.length} rows, ${kept.length} kept so far`);
+    console.log(` ${rows.length} rows, ${kept} kept so far`);
     if (rows.length < PAGE) break;
   }
-  if (!kept.length) {
-    throw new Error(`Fetched ${seen} rows but none fell inside the pilot area. Check the column names printed above.`);
+  await new Promise((ok) => out.end(ok));
+  if (!kept) {
+    throw new Error(`Fetched ${seen} rows but none had usable NYC coordinates. Check the column names printed above.`);
   }
-  fs.writeFileSync(OUT, JSON.stringify({ fetchedAt: new Date().toISOString(), source: DATASET, rows: kept }, null, 1));
-  console.log(`Wrote ${kept.length} signs to ${path.relative(process.cwd(), OUT)}. Next: npm run build-data`);
+  console.log(`Wrote ${kept} of ${seen} signs to ${path.relative(process.cwd(), OUT)}. Next: npm run build-data`);
 }
 
 main().catch((err) => {
