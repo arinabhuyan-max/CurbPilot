@@ -115,3 +115,19 @@ test('real city sign wording', () => {
   assert.deepEqual(sc.days, [TUE, FRI]);
   assert.deepEqual(sc.windows, [{ start: at(11), end: at(12, 30) }]);
 });
+
+test('outer-borough sign wording', () => {
+  assert.equal(parseSign('SHARED E-SCOOTER PARKING  SIGN').kind, 'info');
+  assert.equal(parseSign('BACK IN ANGLE PARKING ONLY <-> (SUPERSEDES SP-7D)').kind, 'info');
+  assert.equal(parseSign('DAY - DAY XYY-XYY (FOR BUS STOP ONLY)').kind, 'info');
+  assert.equal(parseSign('3 HOUR COMMERCIAL VEHICLES ONLY PAY AT MUNI-METER 7AM-7PM EXCEPT SUNDAY').kind, 'commercial_parking', 'meter signs are not payment plates');
+  const fifteen = parseSign('15 MINUTE PARKING --> (THIS SMO REQUIRES D/C APPROVAL)');
+  assert.equal(fifteen.kind, 'limited_parking');
+  assert.equal(fifteen.limitMinutes, 15);
+  assert.equal(describeRule(fifteen), 'time-limited parking anytime');
+  assert.equal(parseSign('1HP 8AM-4PM ALL DAYS -->').limitMinutes, 60);
+  assert.equal(parseSign('STAR (SYMBOL) NYS ROAD TEST ONLY MONDAY-FRIDAY 8AM-5PM <->').kind, 'no_standing');
+  assert.equal(parseSign('TRUCK OR TRAILER PARKING PROHIBITED 9PM-5AM').kind, 'no_parking');
+  assert.equal(parseSign('1 HMP COMMERCIAL VEHICLES  ONLY 8:30-10PM EXCEPT SUNDAY -->').kind, 'unknown', 'half-written time is not "anytime"');
+  assert.equal(parseSign('DESCRIPTION NOT AVAILABLE').kind, 'unknown');
+});

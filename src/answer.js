@@ -61,7 +61,9 @@ function describeStatus(face, status, when) {
     case 'park': {
       const commercial = status.park.some((r) => r.kind === 'commercial_parking');
       const paid = status.park.some((r) => r.paid);
-      const what = commercial ? 'Commercial vehicle parking is allowed' : 'Metered parking is allowed (commercial vans OK)';
+      const what = commercial
+        ? 'Commercial vehicle parking is allowed'
+        : `${paid ? 'Metered' : 'Time-limited'} parking is allowed (commercial vans OK)`;
       return `${what} ${until}${limit ? `, ${limit}` : ''}${paid ? ' — pay at the meter' : ''}.`;
     }
     case 'free':
@@ -104,7 +106,8 @@ function allowedPart(status) {
 
 function stretchName(allowed) {
   if (allowed.category === 'park') {
-    return allowed.park.some((r) => r.kind === 'commercial_parking') ? '"commercial vehicles only"' : 'metered';
+    if (allowed.park.some((r) => r.kind === 'commercial_parking')) return '"commercial vehicles only"';
+    return allowed.park.some((r) => r.paid) ? 'metered' : 'time-limited parking';
   }
   return allowed.load.every((r) => r.kind === 'truck_loading') ? '"truck loading"' : '"no parking"';
 }

@@ -129,7 +129,7 @@ function parseSchedule(s) {
 function parseLimit(s) {
   let m = s.match(/\b1\/2\s*(?:HOUR|HR)\b/);
   if (m) return 30;
-  m = s.match(/\b(\d{1,2})\s*(?:HOURS?|HRS?|HMP)\b/);
+  m = s.match(/\b(\d{1,2})\s*(?:HOURS?|HRS?|HMP|HP)\b/);
   if (m) return Number(m[1]) * 60;
   m = s.match(/\b(ONE|TWO|THREE|FOUR)\s*HOURS?\b/);
   if (m) return { ONE: 1, TWO: 2, THREE: 3, FOUR: 4 }[m[1]] * 60;
@@ -139,14 +139,23 @@ function parseLimit(s) {
 }
 
 const RESERVED =
-  /\bAVO\b|PLATES ONLY|FOR-HIRE VEHICLES|BUS LAYOVER|FARMERS MARKET|AUTHORIZED VEHICLES|AMBULETTE|AMBULANCE|POLICE|NYPD|FDNY|FIRE DEPT|DIPLOMAT|TAXI|HOTEL LOADING|PERMIT|CONSUL|DOT VEHICLES|ELECTRIC VEHICLE|EV CHARGING|BIKE|BICYCLE|CAR SHARE|CARSHARE/;
+  /\bAVO\b|ROAD TEST|TRAILERS|PLATES ONLY|FOR-HIRE VEHICLES|BUS LAYOVER|FARMERS MARKET|AUTHORIZED VEHICLES?\b|AMBULETTE|AMBULANCE|POLICE|NYPD|FDNY|FIRE DEPT|DIPLOMAT|TAXI|HOTEL LOADING|PERMIT|CONSUL|DOT VEHICLES|ELECTRIC VEHICLE|EV CHARGING|BIKE|BICYCLE|CAR SHARE|CARSHARE/;
 const NON_PARKING =
   /^(ONE WAY|DO NOT ENTER|STOP|YIELD|CURB LINE|BUILDING LINE|PROPERTY LINE|SPEED|ROUTE|TRUCK ROUTE|NO RIGHT TURN|NO LEFT TURN|NO TURN|NO U TURN|KEEP RIGHT|PEDESTRIAN|SCHOOL|STREET NAME)\b|\bSUPERSEDED\b|\bREMOVED\b/;
 
 // Plates that carry no curb rule of their own: payment info, bus route panels,
 // "not in effect" riders (the stricter-rule-wins logic already covers those).
-const INFO_PLATES =
-  /PAY-BY-CELL|LOCATOR NUMBER|PAY-BY-APP|PAYMENT ONLY ZONE|INFORMATION (?:SIGN|BOX)|\bPANEL\b|\bBUS RIDER\b|NOT IN EFFECT ABOVE TIMES|^NO ENGINE IDLING/;
+// Also parking-orientation plates ("BACK IN ANGLE PARKING ONLY"), e-scooter
+// signs, idling-law notices and road/guide signs.
+const INFO_PLATES = new RegExp(
+  [
+    'PAY-BY-CELL', 'LOCATOR NUMBER', 'PAY-BY-APP', 'PAYMENT ONLY ZONE', '\\bPAY HERE\\b', 'NYC PARKING CARD',
+    'INFORMATION (?:SIGN|BOX)', '\\bPANEL\\b', '\\bBUS RIDER\\b', 'NOT IN EFFECT ABOVE TIMES', '^NO ENGINE IDLING',
+    'FOR BUS STOP ONLY', 'E-SCOOTER', 'IDLING LAW', '(?:BACK|HEAD) IN .*PARKING ONLY', 'ANGLE PARKING ONLY',
+    'PARALLEL PARKING ONLY', '\\bDEG PARKING ONLY', 'CURVE SIGN', 'ARROW SIGN', 'HAZARD MARKER', 'DELINEATOR',
+    'SIGNAL AHEAD', 'SIDE ROAD', 'NEXT (?:RIGHT|LEFT)', '\\bEXIT\\b', 'SERVICE ROAD ONLY', "O'CLOCK ARROW",
+  ].join('|')
+);
 
 function classify(s) {
   if (INFO_PLATES.test(s)) return 'info';
@@ -159,13 +168,14 @@ function classify(s) {
   if (/\bBUS STOP\b|\bBUS LANE\b|\bFIRE ZONE\b/.test(s)) return 'no_standing';
   if (/\bPASSENGER VEH/.test(s)) return 'passenger_only';
   if (/\bCOMMERCIAL VEH|\bCOMMERCIAL METER|\bCOMMERCIAL PARKING\b/.test(s)) return 'commercial_parking';
+  if (/\bTRUCK OR TRAILER PARKING PROHIBITED\b/.test(s)) return 'no_parking';
   if (/\bNO PARKING\b/.test(s)) {
     if (/EXCEPT\s+TRUCKS?\s+(?:LOADING|UNLOADING)/.test(s)) return 'truck_loading';
     return 'no_parking';
   }
   if (RESERVED.test(s)) return 'no_standing';
   if (/\bLOADING ONLY\b/.test(s)) return 'truck_loading'; // "TRUCK LOADING ONLY", "NLZ LOADING ONLY"
-  if (/\bHOURS? PARKING\b|\bHMP\b|\bMETER|\bPAY\b|\bHOUR LIMIT\b|\bPARKING \d/.test(s)) return 'limited_parking';
+  if (/\bHOURS? PARKING\b|\bMINUTES? PARKING\b|\b\d+\s*HP\b|\bHMP\b|\bMETER|\bPAY\b|\bHOUR LIMIT\b|\bPARKING \d/.test(s)) return 'limited_parking';
   if (NON_PARKING.test(s)) return 'info';
   return 'unknown';
 }
@@ -182,6 +192,11 @@ function parseSign(text) {
   if (schedule) rule.schedule = schedule;
   const w = schedule ? { windows: null } : parseWindows(s);
   if (w.bad) return { ...rule, kind: 'unknown' };
+  // A time we couldn't pair into a range (e.g. the typo "8:30-10PM") must not
+  // silently become "anytime".
+  if (!schedule && !w.found && new RegExp(TIME_TOKEN.replace('(?:', '(?:\\d{1,2}:\\d{2}|')).test(s)) {
+    return { ...rule, kind: 'unknown' };
+  }
   rule.windows = w.windows;
   const d = schedule ? { days: null } : parseDays(s);
   rule.days = d.days;
@@ -245,6 +260,7 @@ function describeRule(rule) {
   let label = KINDS[rule.kind].label;
   if (rule.kind === 'no_parking' && rule.cleaning) label = 'no parking (street cleaning)';
   if (rule.kind === 'commercial_parking' && rule.paid) label = 'commercial metered parking';
+  if (rule.kind === 'limited_parking' && !rule.paid) label = 'time-limited parking';
   const timing = ({ windows, days }) => {
     const when = windows ? windows.map(formatWindow).join(' & ') : days ? 'all day' : 'anytime';
     return [when, formatDays(days)].filter(Boolean).join(' ');
