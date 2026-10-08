@@ -3,8 +3,8 @@
   "demo": false,
   "area": "Midtown South / Flower District: W 23rd to W 34th St, 5th Ave to 9th Ave",
   "source": "https://data.cityofnewyork.us/resource/nfid-uabd.json",
-  "fetchedAt": "2026-10-08T22:42:10.101Z",
-  "builtAt": "2026-10-08T22:44:13.840Z",
+  "fetchedAt": "2026-10-08T22:45:44.242Z",
+  "builtAt": "2026-10-08T22:45:44.653Z",
   "signs": 7277,
   "unreadSigns": 2
  },
