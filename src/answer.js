@@ -1,7 +1,7 @@
 // Builds the plain-English answer a driver sees for one address and time.
 
 const { distanceToSegment } = require('./geo');
-const { describeRule, formatClock } = require('./rules');
+const { KINDS, describeRule, formatClock } = require('./rules');
 const { statusAt, nextChange, nextLegal, timeLimit, RANK } = require('./blockface');
 const { normalizeStreet, prettyStreet, sideName } = require('./streets');
 
@@ -73,17 +73,46 @@ function describeStatus(face, status, when) {
       }
       return `It's "${joinRules(status.load)}", but a commercial van may stop ${until} to make a delivery — only while actively loading or unloading, then move.`;
     }
-    case 'mixed':
-      return `Signs differ along this side: ${joinRules(status.forbid)} on part of it, ${joinRules([
-        ...status.park,
-        ...status.load,
-      ])} on another part. Only stop under a sign that allows it.`;
+    case 'mixed': {
+      // Usual Midtown block: no standing near the corners, meters or loading mid-block.
+      const allowed = allowedPart(status);
+      const what = describeStatus(face, allowed, when);
+      return `On the ${stretchName(allowed)} stretch: ${lowerFirst(what)} The rest of this side is ${joinRules(
+        status.forbid
+      )}. Only stop under a sign that allows it.`;
+    }
     case 'check':
       return `Has a sign CurbPilot can't read ("${status.unknown[0].text}"). Read it before you stop.`;
     case 'no':
-    default:
-      return `${capitalize(joinRules(status.forbid))}.`;
+    default: {
+      // Other signs on this side (e.g. meters) that aren't in effect now: their
+      // stretch may be free, but the city data can't confirm it, so stay cautious.
+      const idle = face.rules.filter((r) => ['park', 'load'].includes(KINDS[r.kind].effect) && !status.load.includes(r) && !status.park.includes(r));
+      if (!idle.length) return `${capitalize(joinRules(status.forbid))}.`;
+      return `${capitalize(joinRules(status.forbid))} on part of this side; the other signs (${joinRules(idle)}) aren't in effect now, so CurbPilot can't confirm the rest. Check the sign at your spot.`;
+    }
   }
+}
+
+// The legal part of a "mixed" side, as a status of its own.
+function allowedPart(status) {
+  return status.park.length
+    ? { category: 'park', forbid: [], load: [], park: status.park, unknown: [] }
+    : { category: 'load', forbid: [], load: status.load, park: [], unknown: [] };
+}
+
+function stretchName(allowed) {
+  if (allowed.category === 'park') {
+    return allowed.park.some((r) => r.kind === 'commercial_parking') ? '"commercial vehicles only"' : 'metered';
+  }
+  return allowed.load.every((r) => r.kind === 'truck_loading') ? '"truck loading"' : '"no parking"';
+}
+
+// A mixed side still has a legal stretch, so it ranks with loading zones
+// (or just above, when the legal stretch is parking).
+function faceRank(status) {
+  if (status.category !== 'mixed') return RANK[status.category];
+  return status.park.length ? RANK.load + 0.5 : RANK.load;
 }
 
 function evaluateFace(face, point, when) {
@@ -92,7 +121,7 @@ function evaluateFace(face, point, when) {
     face,
     status,
     distance: faceDistance(face, point),
-    rank: RANK[status.category],
+    rank: faceRank(status),
     label: faceLabel(face),
     text: describeStatus(face, status, when),
   };
@@ -154,7 +183,8 @@ function buildAnswer({ place, faces, when, meta = {} }) {
   const alternatives = [];
 
   if (best && best.rank >= RANK.load) {
-    verdict = best.status.category === 'load' ? 'load' : 'go';
+    const legal = best.status.category === 'mixed' ? allowedPart(best.status).category : best.status.category;
+    verdict = legal === 'load' ? 'load' : 'go';
     recommendation = { label: best.label, text: best.text, category: best.status.category };
     const action = verdict === 'load' ? 'Stop on' : 'Park on';
     summaryParts.push(`${action} ${faceLabel(best.face, { withBlock: false })}. ${best.text}`);

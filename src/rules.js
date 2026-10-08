@@ -110,6 +110,22 @@ function parseDays(s) {
   return { days };
 }
 
+// "MONDAY-FRIDAY 6PM-MIDNIGHT SATURDAY 8AM-MIDNIGHT": each day group owns the
+// time ranges that follow it. Returns null when the sign has a single schedule.
+function parseSchedule(s) {
+  const dayRe = new RegExp(`(EXCEPT\\s+)?${DAY_TOKEN}(?:\\s*(?:-|&|AND|,|\\s)\\s*${DAY_TOKEN})*`, 'g');
+  const groups = [...s.matchAll(dayRe)];
+  if (groups.length < 2 || groups.some((g) => g[1])) return null;
+  const segments = groups.map((g, i) => {
+    const from = g.index + g[0].length;
+    const to = i + 1 < groups.length ? groups[i + 1].index : s.length;
+    return { days: expandDayExpr(g[0]), ...parseWindows(s.slice(from, to)) };
+  });
+  // Times before the first day group, or a group with no times, means a layout we don't know.
+  if (parseWindows(s.slice(0, groups[0].index)).found || segments.some((x) => !x.found || x.bad)) return 'bad';
+  return segments.map(({ days, windows }) => ({ days, windows }));
+}
+
 function parseLimit(s) {
   let m = s.match(/\b1\/2\s*(?:HOUR|HR)\b/);
   if (m) return 30;
@@ -123,11 +139,17 @@ function parseLimit(s) {
 }
 
 const RESERVED =
-  /AUTHORIZED VEHICLES|AMBULETTE|AMBULANCE|POLICE|NYPD|FDNY|FIRE DEPT|DIPLOMAT|TAXI|HOTEL LOADING|PERMIT|CONSUL|DOT VEHICLES|ELECTRIC VEHICLE|EV CHARGING|BIKE|BICYCLE|CAR SHARE|CARSHARE/;
+  /\bAVO\b|PLATES ONLY|FOR-HIRE VEHICLES|BUS LAYOVER|FARMERS MARKET|AUTHORIZED VEHICLES|AMBULETTE|AMBULANCE|POLICE|NYPD|FDNY|FIRE DEPT|DIPLOMAT|TAXI|HOTEL LOADING|PERMIT|CONSUL|DOT VEHICLES|ELECTRIC VEHICLE|EV CHARGING|BIKE|BICYCLE|CAR SHARE|CARSHARE/;
 const NON_PARKING =
   /^(ONE WAY|DO NOT ENTER|STOP|YIELD|CURB LINE|BUILDING LINE|PROPERTY LINE|SPEED|ROUTE|TRUCK ROUTE|NO RIGHT TURN|NO LEFT TURN|NO TURN|NO U TURN|KEEP RIGHT|PEDESTRIAN|SCHOOL|STREET NAME)\b|\bSUPERSEDED\b|\bREMOVED\b/;
 
+// Plates that carry no curb rule of their own: payment info, bus route panels,
+// "not in effect" riders (the stricter-rule-wins logic already covers those).
+const INFO_PLATES =
+  /PAY-BY-CELL|LOCATOR NUMBER|PAY-BY-APP|PAYMENT ONLY ZONE|INFORMATION (?:SIGN|BOX)|\bPANEL\b|\bBUS RIDER\b|NOT IN EFFECT ABOVE TIMES|^NO ENGINE IDLING/;
+
 function classify(s) {
+  if (INFO_PLATES.test(s)) return 'info';
   if (/\bNO STOPPING\b/.test(s)) return 'no_stopping';
   if (/\bNO STANDING\b/.test(s)) {
     if (/EXCEPT\s+TRUCKS?\s+(?:LOADING|UNLOADING)/.test(s)) return 'truck_loading';
@@ -142,6 +164,7 @@ function classify(s) {
     return 'no_parking';
   }
   if (RESERVED.test(s)) return 'no_standing';
+  if (/\bLOADING ONLY\b/.test(s)) return 'truck_loading'; // "TRUCK LOADING ONLY", "NLZ LOADING ONLY"
   if (/\bHOURS? PARKING\b|\bHMP\b|\bMETER|\bPAY\b|\bHOUR LIMIT\b|\bPARKING \d/.test(s)) return 'limited_parking';
   if (NON_PARKING.test(s)) return 'info';
   return 'unknown';
@@ -149,14 +172,18 @@ function classify(s) {
 
 function parseSign(text) {
   const s = normalizeText(text);
-  const kind = classify(s);
+  // Info plates often say what they are only inside parentheses, e.g. "(ROUTE PANEL)".
+  const kind = INFO_PLATES.test(String(text || '').toUpperCase()) ? 'info' : classify(s);
   const rule = { kind, windows: null, days: null, limitMinutes: null, paid: false, text: String(text || '').trim(), source: 'parser' };
   if (kind === 'info' || kind === 'unknown') return rule;
 
-  const w = parseWindows(s);
+  const schedule = parseSchedule(s);
+  if (schedule === 'bad') return { ...rule, kind: 'unknown' };
+  if (schedule) rule.schedule = schedule;
+  const w = schedule ? { windows: null } : parseWindows(s);
   if (w.bad) return { ...rule, kind: 'unknown' };
   rule.windows = w.windows;
-  const d = parseDays(s);
+  const d = schedule ? { days: null } : parseDays(s);
   rule.days = d.days;
   if (d.schoolDays) rule.schoolDays = true;
   rule.limitMinutes = parseLimit(s);
@@ -171,6 +198,7 @@ function parseSign(text) {
 function isActive(rule, day, minute) {
   if (rule.kind === 'info') return false;
   if (rule.kind === 'unknown') return true; // we can't rule it out, so it always counts
+  if (rule.schedule) return rule.schedule.some((seg) => isActive({ kind: rule.kind, ...seg }, day, minute));
   const dayOk = (d) => !rule.days || rule.days.includes(d);
   if (!rule.windows) return dayOk(day);
   return rule.windows.some(({ start, end }) => {
@@ -217,9 +245,12 @@ function describeRule(rule) {
   let label = KINDS[rule.kind].label;
   if (rule.kind === 'no_parking' && rule.cleaning) label = 'no parking (street cleaning)';
   if (rule.kind === 'commercial_parking' && rule.paid) label = 'commercial metered parking';
-  const when = rule.windows ? rule.windows.map(formatWindow).join(' & ') : rule.days ? 'all day' : 'anytime';
-  const days = formatDays(rule.days);
-  return [label, when, days].filter(Boolean).join(' ');
+  const timing = ({ windows, days }) => {
+    const when = windows ? windows.map(formatWindow).join(' & ') : days ? 'all day' : 'anytime';
+    return [when, formatDays(days)].filter(Boolean).join(' ');
+  };
+  if (rule.schedule) return `${label} ${rule.schedule.map(timing).join(', ')}`;
+  return `${label} ${timing(rule)}`;
 }
 
 module.exports = {

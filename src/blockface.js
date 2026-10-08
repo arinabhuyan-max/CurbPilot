@@ -1,7 +1,7 @@
 // What a commercial van may do on one block face (one side of one block) at a
 // given time, and how long that answer stays true.
 
-const { KINDS, isActive } = require('./rules');
+const { KINDS, isActive, describeRule } = require('./rules');
 
 // Higher is better for the driver.
 const RANK = { park: 5, free: 4, load: 3, mixed: 2, check: 1, no: 0 };
@@ -31,7 +31,7 @@ function statusAt(face, day, minute) {
 
 function signature(status) {
   // Two statuses are "the same answer" if the same rules are in force.
-  const ids = (list) => list.map((r) => r.text).sort().join('|');
+  const ids = (list) => list.map(describeRule).sort().join('|');
   return [status.category, ids(status.forbid), ids(status.load), ids(status.park)].join('#');
 }
 

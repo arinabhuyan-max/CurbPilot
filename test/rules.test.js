@@ -83,3 +83,35 @@ test('unreadable signs are flagged, never guessed', () => {
   assert.equal(isActive(r, MON, at(12)), true);
   assert.equal(parseSign('ONE WAY').kind, 'info');
 });
+
+test('separate hours per day group', () => {
+  const r = parseSign('6 HMP MONDAY-FRIDAY 6PM-MIDNIGHT SATURDAY 8AM-MIDNIGHT <-> (SUPERSEDES  PS-198C)');
+  assert.equal(r.kind, 'limited_parking');
+  assert.equal(r.limitMinutes, 360);
+  assert.equal(isActive(r, MON, at(12)), false, 'weekday noon is not covered');
+  assert.equal(isActive(r, MON, at(19)), true);
+  assert.equal(isActive(r, SAT, at(12)), true);
+  assert.equal(isActive(r, SUN, at(12)), false);
+  assert.equal(describeRule(r), 'metered parking 6 PM–midnight Mon–Fri, 8 AM–midnight Sat');
+  const t = parseSign('TRUCK (SYMBOL) TRUCK LOADING ONLY MONDAY-FRIDAY 5AM-8AM 6PM-10PM SATURDAY 5AM-10PM -->');
+  assert.equal(t.kind, 'truck_loading');
+  assert.equal(isActive(t, TUE, at(7)), true);
+  assert.equal(isActive(t, TUE, at(12)), false);
+  assert.equal(isActive(t, SAT, at(12)), true);
+});
+
+test('real city sign wording', () => {
+  assert.equal(parseSign('PAY-BY-CELL LOCATOR NUMBER').kind, 'info', 'payment plate is not a parking rule');
+  assert.equal(parseSign('LOCAL MTA BUS ROUTE PANEL (TEXT TO BE MODIFIED AS REQUESTED)').kind, 'info');
+  assert.equal(parseSign('Q4/ Q4 LTD (COMBINATION ROUTE PANEL)').kind, 'info');
+  assert.equal(parseSign('METERS ARE NOT IN EFFECT ABOVE TIMES (TO BE USED ONLY FOR CONFLICTING STREET CLEANING AND METERED PARKING REGULATIONS)').kind, 'info');
+  assert.equal(parseSign('TRUCK (SYMBOL) TRUCK LOADING ONLY 7AM-7PM EXCEPT SUNDAY --> (SUPERSEDES SP-30BA & SP-215BA)').kind, 'truck_loading');
+  assert.equal(parseSign('NLZ (SYMBOL) LOADING ONLY MONDAY-FRIDAY 7AM-7PM -->').kind, 'truck_loading');
+  assert.equal(parseSign('STAR (SYMBOL) AVO FIRE DEPARTMENT --> (SUPERSEDES PS-22EA)').kind, 'no_standing');
+  assert.equal(parseSign('FHV (SYMBOL) FOR-HIRE VEHICLES ONLY 6PM-3AM ALL DAYS -->').kind, 'no_standing');
+  assert.equal(parseSign('BUS (SYMBOL) MTA BUS LAYOVER ONLY MONDAY-FRIDAY 3:30PM-7PM --> NO ENGINE IDLING MAX FINE $2000').kind, 'no_standing');
+  assert.equal(parseSign('HARD HAT (SYMBOL) TEMPORARY CONSTRUCTION REGULATION (RIDER)').kind, 'unknown');
+  const sc = parseSign('NO PARKING (SANITATION BROOM SYMBOL) TUESDAY FRIDAY 11AM-12:30PM <-> (SUPERSEDES SP-360C)');
+  assert.deepEqual(sc.days, [TUE, FRI]);
+  assert.deepEqual(sc.windows, [{ start: at(11), end: at(12, 30) }]);
+});
