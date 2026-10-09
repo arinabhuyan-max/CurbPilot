@@ -1,0 +1,8 @@
+{"meta":{"source":"test fixture","provider":"NYC DOT traffic cameras","count":5},"cameras":[
+["1572a83a-0a4f-4a7b-84a0-fec0890a2de3","C4-WST-03-Med_at_Vestry_St",40.723031,-74.01141,"Manhattan"],
+["8a6bc417-4877-4ebe-8052-88c1b261baf1","Central Park West @ 86 St",40.785302,-73.969353,"Manhattan"],
+["41610046-fbab-40be-b824-4afa48119bec","C2-BQE-28-WB_at_Manhattan_Ave-Ex33",40.718992,-73.946421,"Brooklyn"],
+["11111111-2222-4333-8444-555555555555","7 Ave @ W 28 St",40.74760,-73.99360,"Manhattan"],
+["22222222-3333-4444-8555-666666666666","C4-WST-99-NB_at_W_29_St",40.74800,-73.99300,"Manhattan"],
+["not-a-uuid","Bad camera",40.75,-73.99,"Manhattan"]
+]}

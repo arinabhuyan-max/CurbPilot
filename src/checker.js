@@ -5,6 +5,10 @@ const { geocode } = require('./geocode');
 const { parseWhen } = require('./time');
 const { buildAnswer } = require('./answer');
 const { loadData, facesNear } = require('./data');
+const { loadCameras, nearestCameras } = require('./cameras');
+
+let defaultCameras;
+const cameraList = () => (defaultCameras ||= loadCameras());
 
 async function checkCurb({ address, when }, data, opts = {}) {
   if (!address || !String(address).trim()) return { ok: false, error: 'Enter a delivery address.' };
@@ -22,7 +26,14 @@ async function checkCurb({ address, when }, data, opts = {}) {
     when: time,
     meta: { demo: data.meta && data.meta.demo, area: config.area.name },
   });
-  return { ...answer, address: place.label, when: time.label, demo: Boolean(data.meta && data.meta.demo) };
+  return {
+    ...answer,
+    address: place.label,
+    when: time.label,
+    demo: Boolean(data.meta && data.meta.demo),
+    // Live views of the area around the address (not of a specific spot).
+    cameras: nearestCameras(opts.cameras || cameraList(), place.lat, place.lon),
+  };
 }
 
-module.exports = { checkCurb, loadData };
+module.exports = { checkCurb, loadData, cameraList };

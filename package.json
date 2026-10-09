@@ -10,7 +10,8 @@
     "demo-data": "node scripts/make-demo-data.js",
     "fetch-data": "node scripts/fetch-data.js",
     "build-data": "node scripts/build-data.js",
-    "check": "node scripts/check.js"
+    "check": "node scripts/check.js",
+    "fetch-cameras": "node scripts/fetch-cameras.js"
   },
   "engines": {
     "node": ">=20"

@@ -1,4 +1,5 @@
 # Downloads NYC parking-sign data for all five boroughs, rebuilds data/curbs.json,
+# refreshes the public NYC DOT camera list (data/cameras.json),
 # and commits it. Vercel redeploys on the commit.
 #
 # Runs: when this file or the data scripts change on the CurbPilot branch,
@@ -19,6 +20,7 @@ on:
       - src/rules.js
       - src/config.js
       - src/data.js
+      - scripts/fetch-cameras.js
 
 permissions:
   contents: write
@@ -53,6 +55,16 @@ jobs:
             npm run build-data
           fi
 
+      - name: Download public NYC DOT camera list
+        # Cameras are a nice-to-have: never block the sign data refresh on them.
+        continue-on-error: true
+        run: |
+          npm run fetch-cameras
+          # Log whether camera images load when requested from the app's pages.
+          ID=$(node -e 'const c=require("./data/cameras.json").cameras[0]; console.log(c[0])')
+          curl -m 20 -s -o /dev/null -w "camera image with app referer: %{http_code} %{content_type}\n" \
+            -H "Referer: https://curb-pilot.vercel.app/" "https://webcams.nyctmc.org/api/cameras/$ID/image"
+
       - name: Run tests
         run: npm test
 
@@ -61,10 +73,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/curbs.json
+          [ -f data/cameras.json ] && git add data/cameras.json
           [ -f data/ai-rules-cache.json ] && git add data/ai-rules-cache.json
           if git diff --cached --quiet; then
             echo "No data changes."
           else
-            git commit -m "Refresh NYC sign data (all five boroughs)"
+            git commit -m "Refresh NYC sign data and camera list"
             git push
           fi

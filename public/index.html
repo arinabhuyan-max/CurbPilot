@@ -66,6 +66,16 @@
   .caveats { color: var(--muted); font-size: 13px; }
   .caveats li { padding: 2px 0; margin: 0; }
   footer { color: var(--muted); font-size: 13px; margin-top: 18px; text-align: center; }
+  .cam { margin: 0; }
+  .cam img {
+    display: block; width: 100%; height: auto; aspect-ratio: 640 / 352; object-fit: cover;
+    border-radius: 10px; border: 1px solid var(--line); background: var(--bg);
+  }
+  .cam img.stale { opacity: .4; }
+  .cam figcaption { margin: 6px 0 0; }
+  .camnav { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 4px; }
+  .camnav button { font: inherit; font-size: 15px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 10px; min-height: 44px; padding: 0 14px; }
+  .camnav a { color: var(--accent); font-size: 15px; }
 </style>
 </head>
 <body>
@@ -141,6 +151,71 @@
       `<li><b>${esc(x.label)}${x.distance ? ` · ${esc(x.distance)}` : ''}</b>${esc(x.text)}</li>`).join('')}</ul>`;
   }
 
+  // ---- Live camera near the address ----
+  // Public NYC DOT snapshots change every few seconds; reload ours every 5 s while
+  // the page is visible. If the city's server won't hand the image to this page,
+  // fall back to our own /api/camera/<id>/image relay.
+  const CAM_REFRESH_MS = 5000;
+  const CAM_MAX_FAILS = 5;
+  const cam = { list: [], i: 0, timer: null, useProxy: false, fails: 0 };
+
+  function cameraSection(cams) {
+    if (!cams) return '';
+    if (!cams.length) return '<h2>Live camera</h2><p class="meta">No public traffic camera within 1.5 km of this address.</p>';
+    return `<h2>Live camera near this address</h2>
+      <figure class="cam"><img id="camImg" alt="" width="640" height="352"><figcaption id="camCap" class="meta">Loading camera…</figcaption></figure>
+      <div class="camnav">${cams.length > 1 ? '<button type="button" id="camNext"></button>' : ''}<a id="camOpen" target="_blank" rel="noopener">Open full size</a></div>
+      <p class="meta">Shows the area around the camera, not a specific parking spot. Public NYC DOT traffic camera.</p>`;
+  }
+
+  function stopCam() { clearInterval(cam.timer); cam.timer = null; }
+
+  function loadFrame() {
+    const c = cam.list[cam.i];
+    if (!c || !$('camImg')) return stopCam();
+    const want = cam.i;
+    const frame = new Image();
+    frame.onload = () => {
+      if (want !== cam.i || !$('camImg')) return;
+      cam.fails = 0;
+      $('camImg').src = frame.src;
+      $('camImg').classList.remove('stale');
+      const at = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+      $('camCap').textContent = `${c.name} · ${c.distance} away · updated ${at}`;
+    };
+    frame.onerror = () => {
+      if (want !== cam.i || !$('camImg')) return;
+      if (!cam.useProxy) { cam.useProxy = true; return loadFrame(); }
+      $('camImg').classList.add('stale');
+      $('camCap').textContent = `${c.name} · camera image unavailable right now`;
+      if (++cam.fails >= CAM_MAX_FAILS) stopCam();
+    };
+    frame.src = `${cam.useProxy ? c.proxyUrl : c.imageUrl}?t=${Date.now()}`;
+  }
+
+  function showCam(i) {
+    const c = cam.list[i];
+    cam.i = i;
+    cam.fails = 0;
+    $('camImg').alt = `Live view from the traffic camera at ${c.name}`;
+    $('camImg').removeAttribute('src');
+    $('camCap').textContent = `${c.name} · ${c.distance} away · loading…`;
+    $('camOpen').href = c.imageUrl;
+    if ($('camNext')) $('camNext').textContent = `Show another camera (${i + 1} of ${cam.list.length})`;
+    loadFrame();
+    if (!cam.timer) cam.timer = setInterval(() => { if (!document.hidden) loadFrame(); }, CAM_REFRESH_MS);
+  }
+
+  function startCam(list) {
+    stopCam();
+    cam.list = list || [];
+    if (!cam.list.length || !$('camImg')) return;
+    if ($('camNext')) $('camNext').addEventListener('click', () => showCam((cam.i + 1) % cam.list.length));
+    showCam(0);
+  }
+
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && cam.timer) loadFrame(); });
+
   function render(r) {
     const v = r.error ? 'error' : r.verdict;
     let html = `<div class="result"><div class="verdict v-${v}">${VERDICT[v] || v}</div><div class="body">`;
@@ -149,10 +224,12 @@
     } else {
       html += `<div class="meta">${esc(r.address || '')}${r.when ? ` · ${esc(r.when)}` : ''}</div>`;
       html += `<p class="summary">${esc(r.summary)}</p>`;
+      html += cameraSection(r.cameras);
       html += list('Also legal', 'alt', r.alternatives);
       if (r.caveats) html += `<h2>Good to know</h2><ul class="caveats">${r.caveats.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`;
     }
     $('out').innerHTML = html + '</div></div>';
+    startCam(r.error ? [] : r.cameras);
   }
 
   $('form').addEventListener('submit', async (e) => {
