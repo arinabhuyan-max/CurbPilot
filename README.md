@@ -55,6 +55,22 @@ answer.js: best face on the address's own block → else nearest legal face near
 - **AI step (`scripts/ai-rules.js`)**: when the regular parser can't read a sign, Claude can turn its text into the same rule format. This runs while the data is built, not while a driver waits. Each answer is cached in `data/ai-rules-cache.json` so a person can review it. When Claude isn't sure, the sign stays "unreadable". Answers that rely on an AI-read sign tell the driver to double-check it. It uses `claude-opus-5-5` (override with `CURBPILOT_MODEL`), with server-side refusal fallback turned on.
 - **Answers to drivers never call the AI.** The rules are evaluated the same way every time, so the same address and time always give the same answer, and you can test it.
 
+### Parker, the voice assistant (Vapi)
+
+Parker is CurbPilot's assistant. On the page he greets the driver and reacts to each answer; with voice turned on, the driver taps **Talk to Parker**, says the delivery address (and optionally the arrival time), and Parker answers out loud: the recommended spot, its time limit, and a backup spot if it's full. The same answer appears on screen.
+
+How it works: the page loads the Vapi Web SDK (`@vapi-ai/web` 2.7.1) only when the driver taps the button and starts a call with the assistant from `GET /api/voice` (`src/voice.js`). When Parker hears an address, Vapi calls `POST /api/vapi/tool` (`check_curb`), which runs the normal CurbPilot check and returns a short spoken answer. Parker is told to only repeat what CurbPilot returned, never invent rules, keep replies short, and never ask a driver to look at the phone while driving.
+
+Turn it on in Vercel → Project → Settings → Environment Variables, then redeploy:
+
+| Variable | Required | What |
+|---|---|---|
+| `VAPI_PUBLIC_KEY` | yes | Your Vapi **public** key (Vapi dashboard → API Keys). Never the private key. |
+| `VAPI_MODEL` | no | Claude model on Vapi. Default `claude-sonnet-5` (fast enough for voice). |
+| `VAPI_VOICE_PROVIDER`, `VAPI_VOICE_ID` | no | A voice from your Vapi dashboard; Vapi's default voice otherwise. |
+
+**Parker's picture:** put the image at `public/parker.png` (or `.webp` / `.jpg`); the page uses it instead of the placeholder `public/parker.svg`.
+
 ### Backup spots
 
 Every answer also lists up to 3 other legal curbs within about a 5-minute walk (400 m), nearest first, with the walking distance and the rule in one line, so a driver who finds the first spot full goes straight to the next one instead of double-parking or circling.
@@ -96,6 +112,7 @@ src/geocode.js         GeoSearch + offline grid fallback
 src/geo.js             distances; NY State Plane -> lat/lon
 src/data.js            loads data/curbs.json; grid index of nearby block faces
 src/cameras.js         public NYC DOT cameras: nearest to an address, readable names
+src/voice.js           Parker on Vapi: assistant config, tool-call parsing, spoken answers
 scripts/               fetch-data, build-data, ai-rules, make-demo-data, check
 data/demo.json         illustrative demo data (not real signs)
 test/                  node:test suites
