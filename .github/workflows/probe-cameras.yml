@@ -9,12 +9,13 @@ on:
 jobs:
   probe:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Globe TV example page
         run: |
           set +e
           URL=https://globetv.app/webcams/west-street-at-vestry-st-new-york-city-opencctv
-          curl -sSL -D headers.txt -o page.html "$URL"; echo "exit $?"
+          curl -m 30 -sSL -D headers.txt -o page.html "$URL"; echo "exit $?"
           echo "--- headers"; grep -iE '^(HTTP|content-type|x-frame-options|content-security-policy|server)' headers.txt
           echo "--- title/meta"; grep -oiE '<title>[^<]*</title>|<meta[^>]+(description|og:)[^>]+>' page.html | head -20
           echo "--- media-looking URLs"; grep -oE 'https?://[^"'"'"' <>\\]+' page.html | grep -iE 'jpg|jpeg|png|m3u8|mp4|image|cam|cctv|nyctmc|511|stream|embed' | sort -u | head -60
@@ -25,7 +26,7 @@ jobs:
       - name: NYC DOT camera list
         run: |
           set +e
-          curl -sS -D h2.txt -o cams.json https://webcams.nyctmc.org/api/cameras; echo "exit $?"
+          curl -m 30 -sS -D h2.txt -o cams.json https://webcams.nyctmc.org/api/cameras; echo "exit $?"
           grep -iE '^(HTTP|content-type|access-control|cache-control)' h2.txt
           echo "--- count"; jq 'length' cams.json
           echo "--- first"; jq '.[0]' cams.json
@@ -37,9 +38,9 @@ jobs:
           ID=$(jq -r '[.[] | select((.name // "") | test("Vestry"; "i"))][0].id // .[0].id' cams.json)
           IMG=$(jq -r --arg id "$ID" '.[] | select(.id == $id) | .imageUrl // empty' cams.json)
           [ -z "$IMG" ] && IMG="https://webcams.nyctmc.org/api/cameras/$ID/image"
-          echo "--- image $IMG"; curl -sS -D h3.txt -o img.bin "$IMG"; grep -iE '^(HTTP|content-type|content-length|cache-control|access-control)' h3.txt; file img.bin
-          echo "--- site terms"; curl -sSL https://webcams.nyctmc.org/ | grep -oiE '.{60}(terms|copyright|permission|commercial|disclaimer).{120}' | head -10
+          echo "--- image $IMG"; curl -m 30 -sS -D h3.txt -o img.bin "$IMG"; grep -iE '^(HTTP|content-type|content-length|cache-control|access-control)' h3.txt; file img.bin
+          echo "--- site terms"; curl -m 30 -sSL https://webcams.nyctmc.org/ | grep -oiE '.{60}(terms|copyright|permission|commercial|disclaimer).{120}' | head -10
       - name: 511NY public camera list (no key)
         run: |
           set +e
-          curl -sS -o 511.html -w "%{http_code}\n" "https://511ny.org/map/Cctv/"; wc -c 511.html
+          curl -m 30 -sS -o 511.html -w "%{http_code}\n" "https://511ny.org/map/Cctv/"; wc -c 511.html
