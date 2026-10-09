@@ -1,0 +1,31 @@
+# Temporary: read the Vapi Web SDK and docs so the Parker voice code matches them.
+name: Probe Vapi
+on:
+  push:
+    branches: [claude/curbpilot-mvp-plan-3gv9y7]
+    paths: [.github/workflows/probe-vapi.yml]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: SDK package
+        run: |
+          set +e
+          npm view @vapi-ai/web version time.modified dist-tags --json | head -30
+          mkdir p && cd p && npm init -y >/dev/null && npm install @vapi-ai/web --no-audit --no-fund >/dev/null 2>&1
+          V=$(node -p "require('@vapi-ai/web/package.json').version"); echo "installed $V"
+          node -p "JSON.stringify(require('@vapi-ai/web/package.json').exports || require('@vapi-ai/web/package.json').main)"
+          node -e "const m=require('@vapi-ai/web'); console.log('keys', Object.keys(m), 'default', typeof m.default, m.default && Object.getOwnPropertyNames(m.default.prototype||{}))"
+          echo '--- start() and say/send signatures (d.ts)'; grep -rhoE '(start|stop|say|send|setMuted|isMuted)\([^)]{0,200}\)[^;{]{0,120}' node_modules/@vapi-ai/web/dist/*.d.ts | sort -u | head -30
+          echo '--- events'; grep -rhoE "'(call-start|call-end|speech-start|speech-end|volume-level|message|error|call-start-progress|call-start-success|call-start-failed)'" node_modules/@vapi-ai/web/dist/*.d.ts | sort -u
+          echo '--- jsdelivr +esm'; curl -m 20 -s "https://cdn.jsdelivr.net/npm/@vapi-ai/web@$V/+esm" | head -c 600; echo
+          echo '--- esm.sh'; curl -m 20 -s "https://esm.sh/@vapi-ai/web@$V" | head -c 600; echo
+      - name: Docs
+        run: |
+          set +e
+          for u in https://docs.vapi.ai/llms.txt; do echo "=== $u"; curl -m 20 -sL "$u" | grep -iE 'web|custom-tools|tools-calling|anthropic|transient|assistant-overrides|client' | head -40; done
+          for u in https://docs.vapi.ai/quickstart/web.md https://docs.vapi.ai/sdk/web.md https://docs.vapi.ai/tools/custom-tools.md https://docs.vapi.ai/providers/model/anthropic.md; do
+            echo "=== $u"; curl -m 20 -sL "$u" -o doc.txt -w "%{http_code} %{content_type}\n"; head -c 6000 doc.txt; echo; done
