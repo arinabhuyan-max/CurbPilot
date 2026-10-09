@@ -6,6 +6,8 @@
 
 The promise is **fewer parking tickets**, not guaranteed open spots.
 
+**Live app:** https://curb-pilot.vercel.app
+
 - **Customer:** owners and fleet managers of small NYC delivery businesses (10–50 vans) who pay the tickets themselves.
 - **User:** their drivers, on a phone browser. There's nothing to download.
 - **Coverage:** all five boroughs, wherever the city has sign records. Started (and field-tested) in Midtown South / the Flower District.
