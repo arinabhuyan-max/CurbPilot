@@ -42,3 +42,10 @@ test('no camera list: the answer hides the camera panel instead of claiming none
   const r = await checkCurb({ address: '120 W 28th St', when: '2026-10-07T17:00' }, demo, { offline: true, cameras: none });
   assert.equal(r.cameras, null);
 });
+
+test('city camera name clutter is cleaned up', () => {
+  assert.equal(prettyCameraName('Victory Blvd @ Richmond Ave - quad - ptz - 130.146'), 'Victory Blvd at Richmond Ave');
+  assert.equal(prettyCameraName('Grand Central Pkwy @ Midland Pkwy - 62.138'), 'Grand Central Pkwy at Midland Pkwy');
+  assert.equal(prettyCameraName('BB-72 South Rdwy @ Front St'), 'Brooklyn Bridge: South Rdwy at Front St');
+  assert.equal(prettyCameraName('C2-BQE-04_WB_at_Sackett_St-Ex26'), 'BQE westbound at Sackett St (exit 26)');
+});

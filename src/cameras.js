@@ -24,41 +24,56 @@ const ROADS = {
   HHP: 'Henry Hudson Pkwy',
   HRD: 'Harlem River Dr',
   BQE: 'BQE',
-  BKN: 'Brooklyn Bridge',
-  GOW: 'Gowanus Expwy',
-  PRO: 'Prospect Expwy',
+  GE: 'Gowanus Expwy',
+  PE: 'Prospect Expwy',
   BLT: 'Belt Pkwy',
   LIE: 'Long Island Expwy',
   GCP: 'Grand Central Pkwy',
   VWE: 'Van Wyck Expwy',
+  CVE: 'Clearview Expwy',
   CIP: 'Cross Island Pkwy',
   JRP: 'Jackie Robinson Pkwy',
   CBE: 'Cross Bronx Expwy',
   MDE: 'Major Deegan Expwy',
   BRP: 'Bronx River Pkwy',
-  BRU: 'Bruckner Expwy',
+  BRE: 'Bruckner Expwy',
   SIE: 'Staten Island Expwy',
   WSE: 'West Shore Expwy',
+  KWV: 'Korean War Veterans Pkwy',
 };
+const BRIDGES = { BB: 'Brooklyn Bridge', MHB: 'Manhattan Bridge', WBB: 'Williamsburg Bridge', QBB: 'Queensboro Bridge' };
 const DIRECTIONS = { NB: 'northbound', SB: 'southbound', EB: 'eastbound', WB: 'westbound' };
 
-const isHighway = (raw) => /^C\d+-[A-Z0-9]+-/i.test(raw);
+// Expressway, bridge-structure and underpass cameras: they look at roadways, not curbs.
+const isHighway = (raw) => /^C\d+-[A-Z]+-/i.test(raw) || /^(BB|MHB|WBB|QBB)-/i.test(raw) || /\bBPU\b/.test(raw);
+
+function tidy(text) {
+  return text
+    .replace(/_/g, ' ')
+    .replace(/\s*-\s*(quad|ptz)\b.*$/i, '') // "- quad - ptz - 130.146"
+    .replace(/\s*-?\s*\d+\.\d+\s*$/, '') // mile markers like "- 62.138"
+    .replace(/[-\s]Ex(\w+)$/i, ' (exit $1)')
+    .replace(/\s*@\s*/g, ' at ')
+    .replace(/\(\s+/g, '(')
+    .replace(/\s+\)/g, ')')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 // "C2-BQE-28-WB_at_Manhattan_Ave-Ex33" -> "BQE westbound at Manhattan Ave (exit 33)"
-// "Central Park West @ 86 St"          -> "Central Park West at 86 St"
+// "BB-72 South Rdwy @ Front St"        -> "Brooklyn Bridge: South Rdwy at Front St"
+// "Atlantic Ave @ Hicks Ave - quad - ptz - 165.202" -> "Atlantic Ave at Hicks Ave"
 function prettyCameraName(raw) {
   const name = String(raw || '').trim();
-  const m = name.match(/^C\d+-([A-Z0-9]+)-([^_]*)_at_(.+)$/i);
-  if (m) {
-    const road = ROADS[m[1].toUpperCase()] || m[1];
-    const dir = (m[2].match(/\b(NB|SB|EB|WB)\b/i) || [])[1];
-    const at = m[3]
-      .replace(/-Ex(\w+)$/i, ' (exit $1)')
-      .replace(/_/g, ' ')
-      .trim();
-    return [road, dir && DIRECTIONS[dir.toUpperCase()], 'at', at].filter(Boolean).join(' ');
+  const hwy = name.match(/^C\d+-([A-Z]+)-(.*?)[_\s]at[_\s](.+)$/i) || name.match(/^C\d+-([A-Z]+)-([\dA-Z]+(?:-(?:NB|SB|EB|WB))?)_(.+)$/i);
+  if (hwy) {
+    const road = ROADS[hwy[1].toUpperCase()] || hwy[1];
+    const dir = (hwy[2].match(/(?:^|[-_])(NB|SB|EB|WB)$/i) || [])[1];
+    return [road, dir && DIRECTIONS[dir.toUpperCase()], 'at', tidy(hwy[3])].filter(Boolean).join(' ');
   }
-  return name.replace(/_/g, ' ').replace(/\s*@\s*/g, ' at ').replace(/\s+/g, ' ');
+  const bridge = name.match(/^(BB|MHB|WBB|QBB)-\w+\s+(.+)$/i);
+  if (bridge) return `${BRIDGES[bridge[1].toUpperCase()]}: ${tidy(bridge[2])}`;
+  return tidy(name);
 }
 
 function imageUrl(id) {
