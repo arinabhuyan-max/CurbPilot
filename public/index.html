@@ -59,7 +59,7 @@
   .meta { color: var(--muted); font-size: 14px; margin-bottom: 8px; }
   .summary { font-size: 20px; line-height: 1.4; font-weight: 600; margin: 0; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 18px 0 6px; }
-  ul { margin: 0; padding: 0; list-style: none; }
+  ul, ol { margin: 0; padding: 0; list-style: none; }
   li { padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; font-size: 16px; }
   li b { display: block; font-size: 14px; }
   .alt li { background: var(--bg); }
@@ -145,10 +145,11 @@
   fillTimes();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) fillTimes(); });
 
-  function list(title, cls, items) {
+  function list(title, cls, items, numbered) {
     if (!items || !items.length) return '';
-    return `<h2>${title}</h2><ul class="${cls}">${items.map((x) =>
-      `<li><b>${esc(x.label)}${x.distance ? ` · ${esc(x.distance)}` : ''}</b>${esc(x.text)}</li>`).join('')}</ul>`;
+    const tag = numbered ? 'ol' : 'ul';
+    return `<h2>${title}</h2><${tag} class="${cls}">${items.map((x, i) =>
+      `<li><b>${numbered ? `${i + 1}. ` : ''}${esc(x.label.charAt(0).toUpperCase() + x.label.slice(1))}${x.distance ? ` · ${esc(x.distance)}` : ''}</b>${esc(x.text)}</li>`).join('')}</${tag}>`;
   }
 
   // ---- Live camera near the address ----
@@ -260,7 +261,7 @@
       html += `<div class="meta">${esc(r.address || '')}${r.when ? ` · ${esc(r.when)}` : ''}</div>`;
       html += `<p class="summary">${esc(r.summary)}</p>`;
       html += cameraSection(r.cameras);
-      html += list('Also legal', 'alt', r.alternatives);
+      html += list('If that spot is full, try', 'alt', r.backups, true);
       if (r.caveats) html += `<h2>Good to know</h2><ul class="caveats">${r.caveats.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`;
     }
     $('out').innerHTML = html + '</div></div>';

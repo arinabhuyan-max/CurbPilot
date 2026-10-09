@@ -6,6 +6,8 @@ const { statusAt, nextChange, nextLegal, timeLimit, RANK } = require('./blockfac
 const { normalizeStreet, prettyStreet, sideName } = require('./streets');
 
 const NEARBY_METERS = 200; // about one avenue block / two street blocks
+const BACKUP_METERS = 400; // about a 5-minute walk: how far we look for other legal spots
+const MAX_BACKUPS = 3;
 const COVERAGE_METERS = 300; // farther than this from any known curb = outside pilot area
 const WALK_METERS_PER_MIN = 80;
 
@@ -119,6 +121,12 @@ function faceRank(status) {
   return status.park.length ? RANK.load + 0.5 : RANK.load;
 }
 
+// One-line version for the backup list: just what is allowed and until when.
+function shortText(x, when) {
+  if (x.status.category !== 'mixed') return x.text;
+  return `On part of this side: ${lowerFirst(describeStatus(x.face, allowedPart(x.status), when))}`;
+}
+
 function evaluateFace(face, point, when) {
   const status = statusAt(face, when.day, when.minute);
   return {
@@ -166,7 +174,7 @@ function buildAnswer({ place, faces, when, meta = {} }) {
   const home = faces.filter((f) => blockKey(f) === homeKey).map((f) => evaluateFace(f, point, when));
   home.sort((a, b) => b.rank - a.rank || a.distance - b.distance);
   const nearby = withDist
-    .filter((x) => x.distance <= NEARBY_METERS && blockKey(x.face) !== homeKey)
+    .filter((x) => x.distance <= BACKUP_METERS && blockKey(x.face) !== homeKey)
     .map((x) => evaluateFace(x.face, point, when));
 
   const blockName = `${prettyStreet(homeAnchor.face.street)}${
@@ -184,32 +192,27 @@ function buildAnswer({ place, faces, when, meta = {} }) {
   let verdict;
   let recommendation = null;
   let summaryParts = [];
-  const alternatives = [];
+  let picked = null;
 
   if (best && best.rank >= RANK.load) {
     const legal = best.status.category === 'mixed' ? allowedPart(best.status).category : best.status.category;
     verdict = legal === 'load' ? 'load' : 'go';
+    picked = best;
     recommendation = { label: best.label, text: best.text, category: best.status.category };
     const action = verdict === 'load' ? 'Stop on' : 'Park on';
     summaryParts.push(`${action} ${faceLabel(best.face, { withBlock: false })}. ${best.text}`);
     for (const x of doNot) summaryParts.push(`Do NOT park on ${x.label.replace(/ \(between.*\)$/, '')}: ${lowerFirst(x.text)}`);
-    // Also list a second legal side on the same block if there is one.
-    for (const x of home.slice(1).filter((h) => h.rank >= RANK.load)) {
-      alternatives.push({ label: x.label, text: x.text, category: x.status.category });
-    }
   } else {
     const legalNearby = nearby.filter((x) => x.rank >= RANK.load).sort((a, b) => a.distance - b.distance);
     for (const x of doNot) summaryParts.push(`Do NOT park on ${x.label.replace(/ \(between.*\)$/, '')}: ${lowerFirst(x.text)}`);
     if (legalNearby.length) {
       verdict = 'nearby';
       const alt = legalNearby[0];
+      picked = alt;
       recommendation = { label: alt.label, text: alt.text, category: alt.status.category, distance: walk(alt.distance) };
       summaryParts.unshift(
         `Nothing legal on ${blockName} at ${formatClock(when.minute)}. Closest legal option: ${alt.label}, ${walk(alt.distance)}. ${alt.text}`
       );
-      for (const x of legalNearby.slice(1, 3)) {
-        alternatives.push({ label: x.label, text: x.text, category: x.status.category, distance: walk(x.distance) });
-      }
     } else {
       verdict = 'none';
       const soonest = [...home, ...nearby]
@@ -222,13 +225,21 @@ function buildAnswer({ place, faces, when, meta = {} }) {
     }
   }
 
+  // Backup spots for when the recommended one is full: the nearest other legal
+  // curbs within a short walk, nearest first.
+  const backups = [...home, ...nearby]
+    .filter((x) => x !== picked && x.rank >= RANK.load && x.distance <= BACKUP_METERS)
+    .sort((a, b) => a.distance - b.distance || b.rank - a.rank)
+    .slice(0, MAX_BACKUPS)
+    .map((x) => ({ label: x.label, text: shortText(x, when), category: x.status.category, distance: walk(x.distance) }));
+
   return {
     ok: true,
     verdict,
     summary: summaryParts.join(' '),
     recommendation,
     doNot,
-    alternatives,
+    backups,
     caveats,
     block: blockName,
   };

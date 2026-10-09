@@ -24,7 +24,8 @@ test('same block in the morning: both sides legal', async () => {
   const r = await check('120 W 28th St', `${WED}T10:30`);
   assert.equal(r.verdict, 'go');
   assert.equal(r.doNot.length, 0);
-  assert.equal(r.alternatives.length, 1);
+  assert.ok(r.backups.length >= 1);
+  assert.match(r.backups[0].label, /W 28th St/, 'the other side of the same block is the nearest backup');
 });
 
 test('nothing on the block: points to the nearest legal curb', async () => {
@@ -113,4 +114,19 @@ test('compact data loads and the grid finds nearby faces only', () => {
   const near = facesNear(demo, 40.7466, -73.9915);
   assert.ok(near.length > 0 && near.length <= 20);
   assert.equal(facesNear(demo, 40.6, -73.9).length, 0, 'Brooklyn has no demo faces');
+});
+
+test('backup spots: up to 3 other legal curbs, nearest first, never the recommended one', async () => {
+  const r = await check('120 W 28th St', `${WED}T10:30`);
+  assert.ok(r.backups.length >= 1 && r.backups.length <= 3);
+  assert.ok(r.backups.every((b) => b.label !== r.recommendation.label));
+  const metres = r.backups.map((b) => Number(b.distance.match(/about (\d+) m/)[1]));
+  assert.deepEqual(metres, [...metres].sort((a, b) => a - b));
+  assert.ok(r.backups.every((b) => ['park', 'free', 'load', 'mixed'].includes(b.category)));
+});
+
+test('backup spots are listed when the address block itself has nothing legal', async () => {
+  const r = await check('115 W 26th St', `${WED}T12:00`);
+  assert.equal(r.verdict, 'nearby');
+  assert.ok(r.backups.every((b) => b.label !== r.recommendation.label));
 });

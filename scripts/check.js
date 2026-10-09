@@ -18,6 +18,6 @@ checkCurb({ address, when }, loadData(process.env.CURBPILOT_DATA), { offline: pr
   }
   console.log(`${r.address} · ${r.when}\n`);
   console.log(r.summary);
-  for (const a of r.alternatives || []) console.log(`\nAlso legal: ${a.label}${a.distance ? ` (${a.distance})` : ''}. ${a.text}`);
+  (r.backups || []).forEach((a, i) => console.log(`\nBackup ${i + 1}: ${a.label} (${a.distance}). ${a.text}`));
   console.log(`\n${r.caveats.map((c) => `* ${c}`).join('\n')}`);
 });

@@ -55,6 +55,10 @@ answer.js: best face on the address's own block → else nearest legal face near
 - **AI step (`scripts/ai-rules.js`)**: when the regular parser can't read a sign, Claude can turn its text into the same rule format. This runs while the data is built, not while a driver waits. Each answer is cached in `data/ai-rules-cache.json` so a person can review it. When Claude isn't sure, the sign stays "unreadable". Answers that rely on an AI-read sign tell the driver to double-check it. It uses `claude-opus-5-5` (override with `CURBPILOT_MODEL`), with server-side refusal fallback turned on.
 - **Answers to drivers never call the AI.** The rules are evaluated the same way every time, so the same address and time always give the same answer, and you can test it.
 
+### Backup spots
+
+Every answer also lists up to 3 other legal curbs within about a 5-minute walk (400 m), nearest first, with the walking distance and the rule in one line, so a driver who finds the first spot full goes straight to the next one instead of double-parking or circling.
+
 ### Live camera near the address
 
 Each answer shows the nearest public **NYC DOT traffic camera** (up to 3 within 1.5 km, street cameras before expressway and bridge ones), refreshed every 5 seconds. These are the same city cameras that 511NY and sites like Globe TV show. The list (982 cameras, all five boroughs) is downloaded by `npm run fetch-cameras` into `data/cameras.json` by the weekly data job. If a phone can't load a camera image straight from the city, the page uses `/api/camera/<id>/image`, which only relays cameras on that list.
