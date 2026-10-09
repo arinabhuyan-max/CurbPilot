@@ -35,3 +35,10 @@ test('the curb answer includes nearby cameras', async () => {
   assert.equal(r.verdict, 'go');
   assert.equal(r.cameras[0].name, '7 Ave at W 28 St');
 });
+
+test('no camera list: the answer hides the camera panel instead of claiming none nearby', async () => {
+  const demo = loadData(path.join(__dirname, '..', 'data', 'demo.json'));
+  const none = loadCameras(path.join(__dirname, 'fixtures', 'does-not-exist.json'));
+  const r = await checkCurb({ address: '120 W 28th St', when: '2026-10-07T17:00' }, demo, { offline: true, cameras: none });
+  assert.equal(r.cameras, null);
+});

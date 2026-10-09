@@ -152,69 +152,104 @@
   }
 
   // ---- Live camera near the address ----
-  // Public NYC DOT snapshots change every few seconds; reload ours every 5 s while
-  // the page is visible. If the city's server won't hand the image to this page,
-  // fall back to our own /api/camera/<id>/image relay.
+  // Public NYC DOT snapshots change every few seconds; fetch a new one every 5 s
+  // while the page is visible, one request at a time. If the city's server won't
+  // hand a camera's image to this page, use our /api/camera/<id>/image relay for
+  // that camera, and try the direct image again on the next check.
   const CAM_REFRESH_MS = 5000;
   const CAM_MAX_FAILS = 5;
-  const cam = { list: [], i: 0, timer: null, useProxy: false, fails: 0 };
+  const CAM_RETRY_MS = 30000;
+  const cam = { list: [], i: 0, timer: null, gen: 0, loading: false, fails: 0 };
 
   function cameraSection(cams) {
     if (!cams) return '';
     if (!cams.length) return '<h2>Live camera</h2><p class="meta">No public traffic camera within 1.5 km of this address.</p>';
     return `<h2>Live camera near this address</h2>
-      <figure class="cam"><img id="camImg" alt="" width="640" height="352"><figcaption id="camCap" class="meta">Loading camera…</figcaption></figure>
-      <div class="camnav">${cams.length > 1 ? '<button type="button" id="camNext"></button>' : ''}<a id="camOpen" target="_blank" rel="noopener">Open full size</a></div>
+      <figure class="cam" aria-live="off"><img id="camImg" alt="" width="640" height="352"><figcaption id="camCap" class="meta">Loading camera…</figcaption></figure>
+      <div class="camnav">${cams.length > 1 ? '<button type="button" id="camNext"></button>' : ''}<a id="camOpen" target="_blank" rel="noopener noreferrer">Open full size</a></div>
       <p class="meta">Shows the area around the camera, not a specific parking spot. Public NYC DOT traffic camera.</p>`;
   }
 
-  function stopCam() { clearInterval(cam.timer); cam.timer = null; }
+  function stopCam() { clearTimeout(cam.timer); cam.timer = null; }
+
+  function schedule(ms) { stopCam(); cam.timer = setTimeout(tick, ms); }
+
+  function tick() {
+    cam.timer = null;
+    if (document.hidden) return; // resumed by the visibilitychange handler
+    loadFrame();
+  }
+
+  function setCaption(c, text) {
+    $('camCap').textContent = `${c.name} · ${c.distance} away · ${text}`;
+  }
 
   function loadFrame() {
     const c = cam.list[cam.i];
-    if (!c || !$('camImg')) return stopCam();
-    const want = cam.i;
+    if (!c || !$('camImg') || cam.loading) return;
+    const gen = cam.gen; // a newer check or camera switch makes this frame stale
+    const url = c.useProxy ? c.proxyUrl : c.imageUrl;
     const frame = new Image();
+    cam.loading = true;
     frame.onload = () => {
-      if (want !== cam.i || !$('camImg')) return;
+      if (gen !== cam.gen || !$('camImg')) return;
+      cam.loading = false;
       cam.fails = 0;
-      $('camImg').src = frame.src;
-      $('camImg').classList.remove('stale');
+      // Swap in the loaded image itself: re-setting src would download it again.
+      const old = $('camImg');
+      frame.id = 'camImg';
+      frame.width = 640;
+      frame.height = 352;
+      frame.alt = old.alt;
+      old.replaceWith(frame);
+      $('camOpen').href = url.split('?')[0];
       const at = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
-      $('camCap').textContent = `${c.name} · ${c.distance} away · updated ${at}`;
+      setCaption(c, `image loaded ${at}`);
+      schedule(CAM_REFRESH_MS);
     };
     frame.onerror = () => {
-      if (want !== cam.i || !$('camImg')) return;
-      if (!cam.useProxy) { cam.useProxy = true; return loadFrame(); }
+      if (gen !== cam.gen || !$('camImg')) return;
+      cam.loading = false;
+      if (!c.useProxy) {
+        c.useProxy = true; // this camera only
+        return loadFrame();
+      }
       $('camImg').classList.add('stale');
-      $('camCap').textContent = `${c.name} · camera image unavailable right now`;
-      if (++cam.fails >= CAM_MAX_FAILS) stopCam();
+      setCaption(c, 'camera image unavailable right now');
+      schedule(++cam.fails >= CAM_MAX_FAILS ? CAM_RETRY_MS : CAM_REFRESH_MS);
     };
-    frame.src = `${cam.useProxy ? c.proxyUrl : c.imageUrl}?t=${Date.now()}`;
+    frame.src = `${url}?t=${Date.now()}`;
   }
 
   function showCam(i) {
     const c = cam.list[i];
+    stopCam();
     cam.i = i;
+    cam.gen++;
+    cam.loading = false;
     cam.fails = 0;
-    $('camImg').alt = `Live view from the traffic camera at ${c.name}`;
+    $('camImg').alt = `Traffic camera view at ${c.name}`;
     $('camImg').removeAttribute('src');
-    $('camCap').textContent = `${c.name} · ${c.distance} away · loading…`;
+    $('camImg').classList.remove('stale');
+    setCaption(c, 'loading…');
     $('camOpen').href = c.imageUrl;
     if ($('camNext')) $('camNext').textContent = `Show another camera (${i + 1} of ${cam.list.length})`;
     loadFrame();
-    if (!cam.timer) cam.timer = setInterval(() => { if (!document.hidden) loadFrame(); }, CAM_REFRESH_MS);
   }
 
   function startCam(list) {
     stopCam();
+    cam.gen++;
+    cam.loading = false;
     cam.list = list || [];
     if (!cam.list.length || !$('camImg')) return;
     if ($('camNext')) $('camNext').addEventListener('click', () => showCam((cam.i + 1) % cam.list.length));
     showCam(0);
   }
 
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && cam.timer) loadFrame(); });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && cam.list.length && $('camImg') && !cam.timer && !cam.loading) loadFrame();
+  });
 
   function render(r) {
     const v = r.error ? 'error' : r.verdict;

@@ -26,13 +26,15 @@ async function checkCurb({ address, when }, data, opts = {}) {
     when: time,
     meta: { demo: data.meta && data.meta.demo, area: config.area.name },
   });
+  const cameras = opts.cameras || cameraList();
   return {
     ...answer,
     address: place.label,
     when: time.label,
     demo: Boolean(data.meta && data.meta.demo),
-    // Live views of the area around the address (not of a specific spot).
-    cameras: nearestCameras(opts.cameras || cameraList(), place.lat, place.lon),
+    // Live views of the area around the address (not of a specific spot);
+    // null hides the camera panel when no camera list has been downloaded.
+    cameras: cameras.list.length ? nearestCameras(cameras, place.lat, place.lon) : null,
   };
 }
 
