@@ -25,8 +25,8 @@ function send(res, status, body, type = 'application/json; charset=utf-8') {
   res.end(typeof body === 'string' ? body : JSON.stringify(body));
 }
 
-// Parker's picture: the real one (parker.png/.webp/.jpg) if it has been added to
-// public/, otherwise the placeholder parker.svg.
+// Parker's picture: a parker.png/.webp/.jpg in public/ if one has been added,
+// otherwise the drawn parker.svg.
 const PARKER_TYPES = { '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml' };
 const parkerFile = Object.keys(PARKER_TYPES)
   .map((ext) => `parker${ext}`)
