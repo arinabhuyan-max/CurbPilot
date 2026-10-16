@@ -107,6 +107,20 @@
   .camnav { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 4px; }
   .camnav button { font: inherit; font-size: 15px; font-weight: 700; border: 2px solid var(--line); background: var(--bg); color: var(--text); border-radius: 999px; min-height: 44px; padding: 0 16px; }
   .camnav a { color: var(--accent); font-size: 15px; }
+
+  /* What other drivers reported, and the report buttons */
+  .notes { margin: 10px 0 0; }
+  .notes li { padding: 8px 12px; margin-bottom: 6px; font-size: 15px; font-weight: 600; }
+  .alt .notes li { margin: 6px 0 0; }
+  .n-good { background: var(--go-bg); color: var(--go); }
+  .n-warn { background: var(--warn-bg); color: var(--warn); }
+  .n-info { background: var(--load-bg); color: var(--load); }
+  .report { display: grid; gap: 8px; }
+  .report button {
+    font: inherit; font-size: 16px; font-weight: 700; min-height: 48px; border-radius: 999px;
+    border: 2px solid var(--line); background: var(--bg); color: var(--text);
+  }
+  .report-done { font-weight: 700; color: var(--go); margin: 0; }
 </style>
 </head>
 <body>
@@ -192,8 +206,61 @@
     if (!items || !items.length) return '';
     const tag = numbered ? 'ol' : 'ul';
     return `<h2>${title}</h2><${tag} class="${cls}">${items.map((x, i) =>
-      `<li><b>${numbered ? `${i + 1}. ` : ''}${esc(x.label.charAt(0).toUpperCase() + x.label.slice(1))}${x.distance ? ` · ${esc(x.distance)}` : ''}</b>${esc(x.text)}</li>`).join('')}</${tag}>`;
+      `<li><b>${numbered ? `${i + 1}. ` : ''}${esc(x.label.charAt(0).toUpperCase() + x.label.slice(1))}${x.distance ? ` · ${esc(x.distance)}` : ''}</b>${esc(x.text)}${notes(x.reports)}</li>`).join('')}</${tag}>`;
   }
+
+  // ---- Driver reports ----
+  // Shown next to a curb: what other drivers said about it. The answer itself
+  // always comes from the city's sign data; reports are extra evidence.
+  function notes(rep) {
+    if (!rep || !rep.notes || !rep.notes.length) return '';
+    return `<ul class="notes">${rep.notes.map((n) => `<li class="n-${esc(n.tone)}">${esc(n.text)}</li>`).join('')}</ul>`;
+  }
+
+  const REPORT_AGAIN_MS = 6 * 3600e3; // one report per curb per phone every 6 hours
+  const REPORT_THANKS = {
+    ok: 'Thanks! Other drivers will see this spot was confirmed.',
+    full: 'Thanks! Other drivers will see it fills up around this time.',
+    wrong: "Thanks! We'll check these signs against the city data.",
+  };
+  function reported() { try { return JSON.parse(localStorage.getItem('curbpilot.reported') || '{}'); } catch { return {}; } }
+  function markReported(id) {
+    const all = reported();
+    all[id] = Date.now();
+    for (const k of Object.keys(all)) if (Date.now() - all[k] > REPORT_AGAIN_MS) delete all[k];
+    try { localStorage.setItem('curbpilot.reported', JSON.stringify(all)); } catch {}
+  }
+
+  function reportSection(rec) {
+    if (!info.reports || !rec || !rec.id) return '';
+    const done = Date.now() - (reported()[rec.id] || 0) < REPORT_AGAIN_MS;
+    return `<h2>Were you at this spot?</h2>${done
+      ? '<p class="report-done">Thanks, you already reported this spot.</p>'
+      : `<div class="report" id="report" data-id="${esc(rec.id)}">
+          <button type="button" data-k="ok">✓ Parked fine, signs matched</button>
+          <button type="button" data-k="full">Spot was full</button>
+          <button type="button" data-k="wrong">Signs didn't match the app</button>
+        </div>`}`;
+  }
+
+  $('out').addEventListener('click', async (e) => {
+    const k = e.target.dataset && e.target.dataset.k;
+    const box = $('report');
+    if (!k || !box || !box.contains(e.target)) return;
+    const id = box.dataset.id;
+    box.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+    try {
+      const res = await fetch('/api/report', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, kind: k }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      markReported(id);
+      box.outerHTML = `<p class="report-done">${esc(REPORT_THANKS[k])}</p>`;
+    } catch {
+      box.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+      $('parkerSay').textContent = "I couldn't send that report. Try again in a moment.";
+    }
+  });
 
   // ---- Live camera near the address ----
   // Public NYC DOT snapshots change every few seconds; fetch a new one every 5 s
@@ -303,6 +370,8 @@
     } else {
       html += `<div class="meta">${esc(r.address || '')}${r.when ? ` · ${esc(r.when)}` : ''}</div>`;
       html += `<p class="summary">${esc(r.summary)}</p>`;
+      html += notes(r.recommendation && r.recommendation.reports);
+      html += reportSection(r.recommendation);
       html += cameraSection(r.cameras);
       html += list('If that spot is full, try', 'alt', r.backups, true);
       if (r.caveats) html += `<h2>Good to know</h2><ul class="caveats">${r.caveats.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>`;
@@ -438,10 +507,16 @@
     $('parkerSay').textContent = "Hi, I'm Parker! Tap the button and tell me the delivery address, or type it below.";
   }).catch(() => {});
 
+  const info = { reports: false };
   fetch('/api/info').then((r) => r.json()).then((i) => {
+    Object.assign(info, i);
     $('demo').hidden = !i.demo;
     if (i.parkerImage) $('parkerImg').src = i.parkerImage;
-    $('area').textContent = `Covers ${i.area}. Fewer tickets, not guaranteed open spots.`;
+    const built = i.builtAt && new Date(i.builtAt);
+    const updated = built && !isNaN(built)
+      ? ` City sign data updated ${built.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' })}.`
+      : '';
+    $('area').textContent = `Covers ${i.area}.${updated} Fewer tickets, not guaranteed open spots.`;
   }).catch(() => {});
   drawRecent();
 </script>

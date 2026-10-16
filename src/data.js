@@ -38,6 +38,17 @@ function loadData(file) {
   throw new Error('No curb data found. Run `npm run demo-data` or `npm run fetch-data && npm run build-data`.');
 }
 
+// Stable id of a block face across data rebuilds (street + cross streets + side
+// is unique in the city data). Driver reports are stored under it.
+function faceId(face) {
+  return [face.street, face.from, face.to, face.side].join('|');
+}
+
+function faceById(data, id) {
+  if (!data.byId) data.byId = new Map(data.blockfaces.map((f) => [faceId(f), f]));
+  return data.byId.get(id) || null;
+}
+
 function facesNear(data, lat, lon) {
   const r = Math.floor(lat / CELL);
   const c = Math.floor(lon / CELL);
@@ -50,4 +61,4 @@ function facesNear(data, lat, lon) {
   return [...found];
 }
 
-module.exports = { loadData, facesNear };
+module.exports = { loadData, facesNear, faceId, faceById };

@@ -71,6 +71,30 @@ Turn it on in Vercel → Project → Settings → Environment Variables, then re
 
 **Parker's picture:** put the image at `public/parker.png` (or `.webp` / `.jpg`); the page uses it instead of the placeholder `public/parker.svg`.
 
+### Holidays
+
+Answers use the arrival **date**, not just the weekday (`src/holidays.js`):
+
+- **Street cleaning holidays** (NYC DOT's Alternate Side Parking suspension calendar, about 40 days a year): street cleaning rules are lifted. Meters and every other sign stay in effect.
+- **Major legal holidays** (New Year's Day, Memorial Day, Independence Day, Labor Day, Thanksgiving, Christmas): meters are free, and every rule that isn't in effect 7 days a week is lifted. "No Standing Anytime"-type signs still apply.
+
+Mistakes may only make answers stricter: dates the sources disagree on are left out, and an unreadable sign is never lifted. Each answer says which holiday applied (or that it's a normal day, and if tomorrow is a holiday). The 2026 calendar is built in; **add each new year to `ASP_CALENDAR` when DOT publishes it** (nyc.gov → DOT → Alternate Side Parking). Until then only the major legal holidays apply, and answers say so. Emergency suspensions (snow, etc.) are not included.
+
+### Driver reports
+
+Under the recommended spot a driver can tap **Parked fine, signs matched**, **Spot was full**, or **Signs didn't match the app** (`POST /api/report`). The next driver checking that curb sees, for example, "Confirmed by drivers 3 times in the last 90 days (last yesterday)", "Reported full around this time twice recently", or a warning that a driver found the signs different. Parker says that warning out loud too.
+
+Reports never change which curb is recommended: that stays the same sign-based answer every time, so one person can't steer it. "Signs didn't match" reports collect in a review list (`GET /api/reports/wrong` with `Authorization: Bearer $REPORTS_ADMIN_TOKEN`), so someone can check those blocks and fix the data.
+
+Reports need a small database. Turn them on in Vercel → Project → Storage → **Upstash (Redis)** → connect it to this project (free tier is plenty), then redeploy:
+
+| Variable | Required | What |
+|---|---|---|
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | yes | Set automatically by the Upstash integration (`UPSTASH_REDIS_REST_URL` / `_TOKEN` also work). |
+| `REPORTS_ADMIN_TOKEN` | no | Any long random string; lets you read the "signs didn't match" list. |
+
+Without a store, reports are switched off on Vercel and the buttons are hidden. Locally they're kept in memory.
+
 ### Backup spots
 
 Every answer also lists up to 3 other legal curbs within about a 5-minute walk (400 m), nearest first, with the walking distance and the rule in one line, so a driver who finds the first spot full goes straight to the next one instead of double-parking or circling.
@@ -84,7 +108,7 @@ A camera shows the area around an intersection, **not whether a specific parking
 ### Known limits of this MVP
 
 - Signs are judged per block face, not per exact spot. If one side of a block has different rules along its length, the answer says "signs differ along this side" and tells the driver to read the sign where they stop.
-- Hydrants, crosswalks, driveways and holiday suspensions are not modeled. Every answer says so.
+- Hydrants, crosswalks, driveways and emergency (snow) suspensions are not modeled. Every answer says so.
 - Answers were checked most closely in Midtown. Outer-borough sign wording and residential rules (overnight ban for commercial vans) are handled from city rules, not street-checked yet. Where no posted sign applies, answers remind drivers of the citywide 3-hour limit and residential overnight ban.
 - Not included on purpose: live spot availability, maps and navigation, voice, fleet dashboard, fighting tickets, accounts and payments.
 
@@ -103,10 +127,12 @@ A camera shows the area around an intersection, **not whether a specific parking
 
 ```
 public/index.html      phone page (single file, no build step)
-src/server.js          HTTP server: /, /api/check, /api/info
+src/server.js          HTTP server: /, /api/check, /api/info, /api/report
 src/checker.js         the core job: address + time -> answer
 src/rules.js           sign text -> rules; plain-English descriptions
-src/blockface.js       status of one block face at a time; next change
+src/blockface.js       status of one block face at a time (holiday-aware); next change
+src/holidays.js        NYC street cleaning holidays and major legal holidays
+src/reports.js         driver reports: storage (Upstash or memory) and what to show
 src/answer.js          picks the recommendation and writes the sentence
 src/geocode.js         GeoSearch + offline grid fallback
 src/geo.js             distances; NY State Plane -> lat/lon

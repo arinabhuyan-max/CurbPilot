@@ -6,19 +6,27 @@
 //                                 (fallback when the page can't load it directly)
 //   GET  /api/voice      -> Vapi public key + Parker assistant config (voice on/off)
 //   POST /api/vapi/tool  -> Vapi tool-calls webhook: Parker's check_curb
+//   POST /api/report     -> a driver's report on a curb: { id, kind: ok | full | wrong }
+//   GET  /api/reports/wrong -> "signs didn't match" reports to review
+//                              (Authorization: Bearer $REPORTS_ADMIN_TOKEN)
 
 const http = require('http');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const config = require('./config');
 const { checkCurb, loadData, cameraList } = require('./checker');
 const { imageUrl } = require('./cameras');
 const { voiceAssistant, spokenAnswer, readToolCalls, TOOL_NAME } = require('./voice');
+const { faceById } = require('./data');
+const { KINDS: REPORT_KINDS, createStore } = require('./reports');
+const { nycNow } = require('./time');
 
 const PORT = Number(process.env.PORT) || 3000;
 const OFFLINE = process.env.CURBPILOT_OFFLINE === '1';
 const PUBLIC = path.join(__dirname, '..', 'public');
 const data = loadData(process.env.CURBPILOT_DATA);
+const reports = createStore();
 
 function send(res, status, body, type = 'application/json; charset=utf-8') {
   res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' });
@@ -92,7 +100,7 @@ async function handleVapiTool(req, res) {
     readToolCalls(body).map(async ({ id, name, args }) => {
       if (name !== TOOL_NAME) return { toolCallId: id, error: `Unknown tool ${name}` };
       try {
-        const answer = await checkCurb({ address: args.address, when: args.arrival_time || 'now' }, data, { offline: OFFLINE });
+        const answer = await checkCurb({ address: args.address, when: args.arrival_time || 'now' }, data, { offline: OFFLINE, reports });
         return answer.error ? { toolCallId: id, error: answer.error } : { toolCallId: id, result: spokenAnswer(answer) };
       } catch (err) {
         console.error(err);
@@ -103,6 +111,44 @@ async function handleVapiTool(req, res) {
   return send(res, 200, { results });
 }
 
+// Best effort against a script flooding reports: per server instance, per IP.
+const REPORTS_PER_HOUR = 30;
+const reportLog = new Map();
+
+function tooManyReports(ip, now = Date.now()) {
+  const recent = (reportLog.get(ip) || []).filter((t) => now - t < 3600e3);
+  if (reportLog.size > 10000) reportLog.clear();
+  reportLog.set(ip, [...recent, now]);
+  return recent.length >= REPORTS_PER_HOUR;
+}
+
+async function handleReport(req, res) {
+  if (!reports) return send(res, 503, { error: 'Driver reports are not switched on.' });
+  let body;
+  try {
+    body = await readJson(req, 4096);
+  } catch {
+    return send(res, 400, { error: 'Bad request' });
+  }
+  if (!REPORT_KINDS.includes(body.kind) || typeof body.id !== 'string' || !faceById(data, body.id)) {
+    return send(res, 400, { error: 'Unknown curb or report type.' });
+  }
+  const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+  if (tooManyReports(ip)) return send(res, 429, { error: 'Too many reports. Try again later.' });
+  const { day, minute } = nycNow();
+  await reports.add(body.id, { k: body.kind, t: Date.now(), d: day, m: minute });
+  return send(res, 200, { ok: true });
+}
+
+function isAdmin(req) {
+  const token = process.env.REPORTS_ADMIN_TOKEN;
+  const given = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!token || !given) return false;
+  const a = crypto.createHash('sha256').update(token).digest();
+  const b = crypto.createHash('sha256').update(given).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   try {
@@ -110,9 +156,14 @@ const server = http.createServer(async (req, res) => {
       const result = await checkCurb(
         { address: url.searchParams.get('address'), when: url.searchParams.get('when') },
         data,
-        { offline: OFFLINE }
+        { offline: OFFLINE, reports }
       );
       return send(res, result.error ? 400 : 200, result);
+    }
+    if (url.pathname === '/api/report' && req.method === 'POST') return await handleReport(req, res);
+    if (url.pathname === '/api/reports/wrong') {
+      if (!reports || !isAdmin(req)) return send(res, 404, { error: 'Not found' });
+      return send(res, 200, { reports: await reports.wrongList() });
     }
     if (url.pathname === '/api/vapi/tool' && req.method === 'POST') return await handleVapiTool(req, res);
     if (url.pathname === '/api/voice') {
@@ -128,6 +179,7 @@ const server = http.createServer(async (req, res) => {
         ...data.meta,
         blockfaces: data.blockfaces.length,
         cameras: cameraList().list.length,
+        reports: Boolean(reports),
         parkerImage: parkerFile ? `/${parkerFile}` : null,
       });
     }
