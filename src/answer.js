@@ -4,6 +4,8 @@ const { distanceToSegment } = require('./geo');
 const { KINDS, describeRule, formatClock } = require('./rules');
 const { statusAt, nextChange, nextLegal, timeLimit, RANK } = require('./blockface');
 const { normalizeStreet, prettyStreet, sideName } = require('./streets');
+const { calendarCovers, holidayOn, addDays } = require('./holidays');
+const { faceId } = require('./data');
 
 const NEARBY_METERS = 200; // about one avenue block / two street blocks
 const BACKUP_METERS = 400; // about a 5-minute walk: how far we look for other legal spots
@@ -57,7 +59,7 @@ function joinRules(rules) {
 
 // One sentence on what the van may do on this face right now.
 function describeStatus(face, status, when) {
-  const until = untilPhrase(nextChange(face, when.day, when.minute), when);
+  const until = untilPhrase(nextChange(face, when.day, when.minute, when.date), when);
   const limit = limitPhrase(timeLimit(status));
   switch (status.category) {
     case 'park': {
@@ -68,9 +70,14 @@ function describeStatus(face, status, when) {
         : `${paid ? 'Metered' : 'Time-limited'} parking is allowed (commercial vans OK)`;
       return `${what} ${until}${limit ? `, ${limit}` : ''}${paid ? ' — pay at the meter' : ''}.`;
     }
-    case 'free':
+    case 'free': {
       // Citywide rules for commercial vehicles still apply where no sign is posted.
-      return `No posted parking restriction ${until}. City rules for commercial vans still apply: 3-hour limit, and no parking 9 PM–5 AM on residential streets.`;
+      const cityRules = 'City rules for commercial vans still apply: 3-hour limit, and no parking 9 PM–5 AM on residential streets.';
+      if (status.suspended && status.suspended.length && when.holiday) {
+        return `The signs here (${joinRules(status.suspended)}) are suspended for ${when.holiday.name}, so no posted restriction ${until}. ${cityRules}`;
+      }
+      return `No posted parking restriction ${until}. ${cityRules}`;
+    }
     case 'load': {
       const trucks = status.load.every((r) => r.kind === 'truck_loading');
       if (trucks) {
@@ -128,7 +135,7 @@ function shortText(x, when) {
 }
 
 function evaluateFace(face, point, when) {
-  const status = statusAt(face, when.day, when.minute);
+  const status = statusAt(face, when.day, when.minute, when.holiday);
   return {
     face,
     status,
@@ -144,6 +151,26 @@ function walk(meters) {
   return `about ${Math.round(meters / 10) * 10} m, ${mins} min walk`;
 }
 
+// What today's holiday (or lack of one) did to the answer. Without a date
+// (tests, old callers) holidays can't be applied, so say so.
+function holidayCaveat(when) {
+  const h = when.holiday;
+  if (h && h.major) {
+    return `${h.name} is a major legal holiday: NYC suspends parking meters and every rule that isn't in effect 7 days a week. Signs like "No Standing Anytime" still apply. The answer above already includes this.`;
+  }
+  if (h) {
+    return `Alternate side parking (street cleaning) is suspended for ${h.name}. Meters and all other signs are in effect. The answer above already includes this.`;
+  }
+  if (!when.date) return 'Holiday rule suspensions are not applied — answers assume a normal day.';
+  // Answers look up to 24 hours ahead, so tomorrow's holiday can change the times.
+  const tomorrow = holidayOn(addDays(when.date, 1));
+  const ahead = tomorrow ? ` Tomorrow is ${tomorrow.name}; times above already include it.` : '';
+  if (!calendarCovers(when.date)) {
+    return `The city's ${when.date.slice(0, 4)} street cleaning holiday list isn't loaded yet, so street cleaning rules are assumed in effect. Major legal holidays are applied.${ahead}`;
+  }
+  return `Not a city parking holiday. Emergency suspensions (snow, etc.) are not included, so all posted rules are assumed in effect.${ahead}`;
+}
+
 function buildAnswer({ place, faces, when, meta = {} }) {
   const point = [place.lat, place.lon];
   const withDist = faces
@@ -152,7 +179,7 @@ function buildAnswer({ place, faces, when, meta = {} }) {
 
   const caveats = [
     'Always obey the sign at your exact spot. Hydrants (15 ft), crosswalks, driveways and bus stops are not in the sign data.',
-    'Holiday rule suspensions are not applied — answers assume a normal day.',
+    holidayCaveat(when),
   ];
   if (meta.demo) caveats.unshift('DEMO DATA: these are sample signs, not real NYC signs. Do not rely on them.');
 
@@ -184,7 +211,7 @@ function buildAnswer({ place, faces, when, meta = {} }) {
   }`;
   const doNot = home
     .filter((x) => x.rank < RANK.load)
-    .map((x) => ({ label: x.label, text: x.text, category: x.status.category }));
+    .map((x) => ({ id: faceId(x.face), label: x.label, text: x.text, category: x.status.category }));
   const usedAi = [...home, ...nearby].some((x) => x.face.rules.some((r) => r.source === 'ai'));
   if (usedAi) caveats.push('Some signs here were interpreted by AI from the city data. Double-check them on the street.');
 
@@ -198,7 +225,7 @@ function buildAnswer({ place, faces, when, meta = {} }) {
     const legal = best.status.category === 'mixed' ? allowedPart(best.status).category : best.status.category;
     verdict = legal === 'load' ? 'load' : 'go';
     picked = best;
-    recommendation = { label: best.label, text: best.text, category: best.status.category };
+    recommendation = { id: faceId(best.face), label: best.label, text: best.text, category: best.status.category };
     const action = verdict === 'load' ? 'Stop on' : 'Park on';
     summaryParts.push(`${action} ${faceLabel(best.face, { withBlock: false })}. ${best.text}`);
     for (const x of doNot) summaryParts.push(`Do NOT park on ${x.label.replace(/ \(between.*\)$/, '')}: ${lowerFirst(x.text)}`);
@@ -209,14 +236,14 @@ function buildAnswer({ place, faces, when, meta = {} }) {
       verdict = 'nearby';
       const alt = legalNearby[0];
       picked = alt;
-      recommendation = { label: alt.label, text: alt.text, category: alt.status.category, distance: walk(alt.distance) };
+      recommendation = { id: faceId(alt.face), label: alt.label, text: alt.text, category: alt.status.category, distance: walk(alt.distance) };
       summaryParts.unshift(
         `Nothing legal on ${blockName} at ${formatClock(when.minute)}. Closest legal option: ${alt.label}, ${walk(alt.distance)}. ${alt.text}`
       );
     } else {
       verdict = 'none';
       const soonest = [...home, ...nearby]
-        .map((x) => ({ x, at: nextLegal(x.face, when.day, when.minute) }))
+        .map((x) => ({ x, at: nextLegal(x.face, when.day, when.minute, when.date) }))
         .filter((y) => y.at)
         .sort((a, b) => a.at.ahead - b.at.ahead || a.x.distance - b.x.distance)[0];
       let line = `WARNING: no legal place to stop within a block of this address at ${formatClock(when.minute)}. Stopping here risks a ticket.`;
@@ -231,7 +258,13 @@ function buildAnswer({ place, faces, when, meta = {} }) {
     .filter((x) => x !== picked && x.rank >= RANK.load && x.distance <= BACKUP_METERS)
     .sort((a, b) => a.distance - b.distance || b.rank - a.rank)
     .slice(0, MAX_BACKUPS)
-    .map((x) => ({ label: x.label, text: shortText(x, when), category: x.status.category, distance: walk(x.distance) }));
+    .map((x) => ({
+      id: faceId(x.face),
+      label: x.label,
+      text: shortText(x, when),
+      category: x.status.category,
+      distance: walk(x.distance),
+    }));
 
   return {
     ok: true,

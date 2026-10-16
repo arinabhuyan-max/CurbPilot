@@ -1,0 +1,56 @@
+# Checks CurbPilot's answers against real NYC parking tickets written to
+# commercial plates (scripts/ticket-audit.js). The result shows on the run's
+# Summary page and is kept as the "ticket-audit" download.
+#
+# Runs: by hand (Actions tab -> Ticket check -> Run workflow), weekly after
+# the sign data refresh, and when the check itself changes.
+
+name: Ticket check
+
+on:
+  workflow_dispatch:
+    inputs:
+      tickets:
+        description: How many recent commercial tickets to check
+        default: '20000'
+  schedule:
+    - cron: '47 11 * * 1' # Mondays 11:47 UTC, after "Refresh NYC sign data"
+  push:
+    paths:
+      - .github/workflows/ticket-audit.yml
+      - scripts/ticket-audit.js
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ticket-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check answers against recent tickets
+        env:
+          TICKETS: ${{ inputs.tickets || '20000' }}
+          SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
+        run: npm run ticket-audit
+
+      - name: Show the result on the Summary page
+        if: always()
+        run: '[ -f data/ticket-audit.md ] && cat data/ticket-audit.md >> "$GITHUB_STEP_SUMMARY" || true'
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ticket-audit
+          path: data/ticket-audit.md
+          if-no-files-found: ignore

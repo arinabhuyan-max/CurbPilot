@@ -65,6 +65,9 @@ function spokenAnswer(r) {
       .replace(/\s+/g, ' ')
       .trim();
   const parts = [clean(r.summary)];
+  // Warn out loud when drivers found the recommended spot's signs different.
+  const warn = ((r.recommendation && r.recommendation.reports && r.recommendation.reports.notes) || []).find((n) => n.tone === 'warn');
+  if (warn) parts.push(`Heads up: ${warn.text}`);
   const backups = r.backups || [];
   backups.forEach((b, i) => {
     parts.push(`Backup ${i + 1} if that's full: ${b.label}, ${b.distance}. ${clean(b.text)}`);

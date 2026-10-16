@@ -6,10 +6,25 @@ const { parseWhen } = require('./time');
 const { buildAnswer } = require('./answer');
 const { loadData, facesNear } = require('./data');
 const { loadCameras, nearestCameras } = require('./cameras');
+const { summarize } = require('./reports');
 
 let defaultCameras;
 const cameraList = () => (defaultCameras ||= loadCameras());
 
+// Adds what drivers reported to each listed curb (as `reports`). A slow or
+// broken report store never holds up or breaks the answer itself.
+async function attachReports(answer, store, minute) {
+  const items = [answer.recommendation, ...(answer.backups || []), ...(answer.doNot || [])].filter(Boolean);
+  const ids = [...new Set(items.map((x) => x.id))];
+  try {
+    const found = await store.recent(ids);
+    for (const x of items) x.reports = summarize(found.get(x.id) || [], minute);
+  } catch (err) {
+    console.error('Driver reports unavailable:', err.message);
+  }
+}
+
+// opts.reports: the driver report store (reports.js), or nothing to leave reports out.
 async function checkCurb({ address, when }, data, opts = {}) {
   if (!address || !String(address).trim()) return { ok: false, error: 'Enter a delivery address.' };
   const time = parseWhen(when, opts.now);
@@ -26,6 +41,7 @@ async function checkCurb({ address, when }, data, opts = {}) {
     when: time,
     meta: { demo: data.meta && data.meta.demo, area: config.area.name },
   });
+  if (opts.reports && answer.ok) await attachReports(answer, opts.reports, time.minute);
   const cameras = opts.cameras || cameraList();
   return {
     ...answer,
