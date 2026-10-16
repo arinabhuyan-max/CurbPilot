@@ -5,8 +5,8 @@
 // have told the driver?
 //
 //   warned      CurbPilot said don't stop here (or only on part of this side)
-//   load only   "no parking" ticket where CurbPilot said: stop only while
-//               loading/unloading (consistent: the van likely stayed longer)
+//   load only   CurbPilot said: stop only while loading/unloading (no parking
+//               or truck loading zone). Consistent: the van likely stayed longer
 //   missed      CurbPilot said OK to stop, but the city wrote a ticket: the
 //               sign data or our reading of it may be wrong. Check these blocks.
 //
@@ -114,10 +114,9 @@ function faceForTicket(data, ticket, place) {
 function judge(face, ticket) {
   const holiday = holidayOn(ticket.date);
   const status = statusAt(face, ticket.day, ticket.minute, holiday);
-  const kind = CODES[ticket.code].rule;
   let outcome;
   if (['no', 'mixed', 'check'].includes(status.category)) outcome = 'warned';
-  else if (status.category === 'load' && kind === 'no parking') outcome = 'load';
+  else if (status.category === 'load') outcome = 'load';
   else outcome = 'missed';
   return { outcome, category: status.category, holiday };
 }
@@ -146,7 +145,7 @@ function report(s, meta) {
     '| What CurbPilot would have said | Tickets | Share |',
     '|---|---:|---:|',
     `| **Warned:** don't stop here (or only on part of this side) | ${s.warned} | ${pct(s.warned, s.total)} |`,
-    `| **Stop only while loading** (no parking tickets; van likely stayed longer) | ${s.load} | ${pct(s.load, s.total)} |`,
+    `| **Stop only while loading** (no parking or truck loading zone; van likely stayed longer) | ${s.load} | ${pct(s.load, s.total)} |`,
     `| **Missed:** said OK to stop, but a ticket was written | ${s.missed} | ${pct(s.missed, s.total)} |`,
     '',
     `**CurbPilot would have warned the driver, or limited them to loading, for ${pct(s.warned + s.load, s.total)} of these tickets.**`,

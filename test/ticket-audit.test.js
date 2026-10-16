@@ -52,3 +52,10 @@ test('each ticket is checked against what CurbPilot would have said', () => {
   assert.match(md, /would have warned the driver, or limited them to loading, for 50\.0% of these tickets/);
   assert.match(md, /the north side of W 28th St .* \| 2 \| No standing \(sign\), Wed 2026-10-07 5 PM at 121 W 28th St, Manhattan/);
 });
+
+test('a no standing ticket in a truck loading zone counts as "stop only while loading"', () => {
+  const { judge } = require('../scripts/ticket-audit');
+  const { parseSign } = require('../src/rules');
+  const face = { street: 'E 95 ST', from: '2 AVE', to: '3 AVE', side: 'S', line: [[40.78, -73.95]], rules: [parseSign('NO STANDING EXCEPT TRUCKS LOADING & UNLOADING 8AM-6PM MON-FRI')] };
+  assert.equal(judge(face, readTicket(row({ violation_time: '0351P' }))).outcome, 'load');
+});
