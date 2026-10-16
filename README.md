@@ -112,6 +112,18 @@ A camera shows the area around an intersection, **not whether a specific parking
 - Answers were checked most closely in Midtown. Outer-borough sign wording and residential rules (overnight ban for commercial vans) are handled from city rules, not street-checked yet. Where no posted sign applies, answers remind drivers of the citywide 3-hour limit and residential overnight ban.
 - Not included on purpose: live spot availability, maps and navigation, voice, fleet dashboard, fighting tickets, accounts and payments.
 
+## Ticket check: is CurbPilot right?
+
+The GitHub Action **Ticket check** takes recent real NYC parking tickets written to commercial plates for no standing / no parking (NYC Open Data "Parking Violations Issued", violation codes 14, 19, 20, 21), places each one on its side of the block (NYC GeoSearch), and asks what CurbPilot would have told the driver at that exact date and time:
+
+- **Warned:** CurbPilot said don't stop here (or only on part of this side).
+- **Stop only while loading:** a no-parking ticket where CurbPilot said loading/unloading only.
+- **Missed:** CurbPilot said OK to stop, but a ticket was written. These curbs are listed first; check them on the street.
+
+The headline number ("CurbPilot would have warned the driver for X% of these tickets") is the accuracy figure to track week to week and to show customers. Open Actions → Ticket check → the latest run → **Summary**. It runs weekly after the data refresh, or by hand (Run workflow). Locally: `npm run ticket-audit` (needs the real data) writes `data/ticket-audit.md`.
+
+A miss isn't always CurbPilot's mistake: officers may write the nearest house number, and hydrants, crosswalks and temporary signs aren't in the sign data.
+
 ## Field test (how we'll know it works)
 
 1. Load the real data (above) and confirm the page has **no** demo banner.
@@ -139,7 +151,7 @@ src/geo.js             distances; NY State Plane -> lat/lon
 src/data.js            loads data/curbs.json; grid index of nearby block faces
 src/cameras.js         public NYC DOT cameras: nearest to an address, readable names
 src/voice.js           Parker on Vapi: assistant config, tool-call parsing, spoken answers
-scripts/               fetch-data, build-data, ai-rules, make-demo-data, check
+scripts/               fetch-data, build-data, ai-rules, make-demo-data, check, ticket-audit
 data/demo.json         illustrative demo data (not real signs)
 test/                  node:test suites
 ```
